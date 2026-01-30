@@ -1,0 +1,48 @@
+Execution
+
+
+
+var running = false;
+var ips = 100;
+var lastTime = 0;
+var instAcc = 0;
+
+function run() {
+  // if in node environment:
+  lastTime = Number(process.hrtime.bigint()) / 1e9;
+  // if in browser:
+  lastTime = performance.now()/1000;
+
+  running = true;
+  loop();
+}
+
+function stop() {
+  running = false;
+}
+
+HLT = stop;
+
+function loop() {
+  if (!running) return;
+  // node:
+  var time = Number(process.hrtime.bigint()) / 1e9;
+  // browser:
+  var time = performance.now()/1000;
+
+  var delta = time - lastTime;
+  lastTime = time;
+  instAcc += delta * ips;
+  var i = instAcc | 0;
+  instAcc -= i;
+  while (i--) step();
+  // node:
+  setImmediate(loop);
+  // browser:
+  setTimeout(loop,0);
+}
+
+
+
+next(code): Full Program (up to this point)
+back: Hardware Interrupts

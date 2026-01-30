@@ -1,0 +1,73 @@
+Running Test (again)
+
+var test = // same as before
+
+var cpu = new cpu6502();
+var RAM = new Uint8Array(0x10000);
+RAM.set(test);
+cpu.readRAM = address => RAM[address];
+cpu.writeRAM = (address,value) => RAM[address] = value;
+
+function formatHex(n,b=2) {
+  return (+n).toString(16).padStart(b,'0');
+}
+
+function formatBin(n,b=8) {
+  return (+n).toString(2).padStart(b,'0');
+}
+
+var regs = document.createElement('div');
+var zp = document.createElement('div');
+
+document.body.appendChild(regs);
+document.body.appendChild(document.createElement('hr'));
+document.body.appendChild(zp);
+
+var H = new Array(256).fill().map((_,i) => 
+  (i+256).toString(16).slice(-2).toUpperCase());
+
+function disp() {
+  regs.innerText = `PC:$${formatHex(cpu.PC,4)}   NV-BDIZC
+SP:$${formatHex(cpu.SP)} PS:%${formatBin(cpu.PS)}
+A:$${formatHex(cpu.A)}  X:$${formatHex(cpu.X)}  Y:$${formatHex(cpu.Y)}`;
+
+  var txt = '';
+  for (var r = 0; r < 16; r++) {
+    txt += formatHex(r*16,2) + ': ';
+    for (var c = 0; c < 16; c++) {
+      txt += H[RAM[r*16+c]] + (c === 15 ? '\n' : ' ');
+    }
+  }
+  zp.innerText = txt;
+}
+
+document.body.style.font = '18px monospace';
+
+disp();
+
+function disploop() {
+  if (!cpu.running) return;
+  disp();
+  requestAnimationFrame(disploop);
+}
+
+cpu.sendReset();
+cpu.step();
+
+cpu.ips = 100000;   // approx. 5 minutes
+cpu.ips = 1000000;  // approx. 30 seconds
+cpu.ips = 10000000; // approx. 3 seconds
+
+// when ready,
+
+cpu.run();
+disploop();
+
+// enter
+
+// if PC reaches $3469, success
+
+cpu.stop();
+
+next(code): Tracing
+back: Full Program (up to this point)

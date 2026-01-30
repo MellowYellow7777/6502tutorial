@@ -1,0 +1,12 @@
+Initializing Registers and Memory
+
+var A = 0;
+var X = 0;
+var Y = 0;
+var SP = 0;
+var PS = 0;
+var PC = 0;
+var RAM = new Uint8Array(0x10000).fill(0);
+
+next(notes): Memory Access (Overview)
+back: Memory

@@ -1,0 +1,82 @@
+Instructions (Overview)
+
+There are 56 distinct instructions supported by the 6502. These can be grouped into several categories:
+
+Memory transfer
+
+  LDA - load A
+  LDX - load X
+  LDY - load Y
+  STA - store A
+  STX - store X
+  STY - store Y
+  TAX - transfer A to X
+  TAY - transfer A to Y
+  TXA - transfer X to A
+  TYA - transfer Y to A
+  TXS - transfer X to SP
+  TSX - transfer SP to X
+
+Stack
+
+  PHA - push A to stack
+  PHP - push PS to stack
+  PLA - pull A from stack
+  PLP - pull PS from stack
+
+Arithmetic
+
+  INC - increment memory value
+  INX - increment X
+  INY - increment Y
+  DEC - decrement memory value
+  DEX - decrement X
+  DEY - decrement Y
+  ADC - add with carry
+  SBC - subtract with "carry"/borrow
+  CMP - compare A to a memory value
+  CPX - compare X to a memory value
+  CPY - compare Y to a memory value
+
+Logic/Bitwise
+
+  AND - bitwise and A with a memory value
+  ORA - bitwise or A with a memory value
+  EOR - bitwise xor A with a memory value
+  BIT - uses bitwise and to set zero flag
+  ASL - arithemetic shift left (on A or a memory value)
+  LSR - logical shift right (on A or a memory value)
+  ROL - rotate left through carry (on A or a memory value)
+  ROR - rotate right through carry (on A or a memory value)
+
+Flags
+
+  SED - set decimal mode
+  SEI - set interrupt disable
+  SEC - set carry
+  CLV - clear overflow
+  CLD - clear decimal mode
+  CLI - clear interrupt disable
+  CLC - clear carry
+
+Control Flow
+
+  BMI - branch if "minus" (n flag set)
+  BVS - branch if overflow set
+  BNE - branch if not equal (zero flag set)
+  BCS - branch if carry set
+  BPL - branch if "plus" (n flag clear)
+  BVC - branch if overflow clear
+  BEQ - branch if equal (zero flag clear)
+  BCC - branch if carry clear
+  JMP - unconditional jump
+  JSR - jump to subroutine
+  RTS - return from subroutine
+  BRK - software interrupt
+  RTI - return from interrupt
+  NOP - no operation
+
+
+
+next(code): Instructions (Implementation)
+back: Flags and the Stack

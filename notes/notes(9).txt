@@ -1,0 +1,130 @@
+Flags and the Stack
+
+// stack range: $0100 - $01ff
+// stack pointer points to address $0100 + SP
+
+
+
+// push
+
+function pushStack(value) {
+  RAM[0x100 | SP] = value;   // first push value
+  SP = SP - 1 & 0xff;        // then decrement SP
+}
+
+// pull
+
+function pullStack() {
+  SP = SP + 1 & 0xff;        // first increment SP
+  return RAM[0x100 | SP];    // then pull value
+}
+
+
+
+// flags
+
+//             NV-BDIZC
+var FLAG_N = 0b10000000; // negative
+var FLAG_V = 0b01000000; // overflow
+var FLAG_U = 0b00100000; // unused
+var FLAG_B = 0b00010000; // break
+var FLAG_D = 0b00001000; // decimal mode
+var FLAG_I = 0b00000100; // interrupt disable
+var FLAG_Z = 0b00000010; // zero
+var FLAG_C = 0b00000001; // carry
+
+
+// bitwise | to set a bit
+
+//        NV-BDIZC
+// PS = 0b11110000
+//    | 0b00000010 (FLAG_Z)
+//    = 0b11110010
+
+// bitwise & with ~ to clear a bit
+
+// biwise ~ flips flag bits
+//      0b01000000 (FLAG_V)
+//      0b10111111 (~FLAG_V)
+
+// bitwise & to clear
+//        NV-BDIZC
+// PS = 0b11110000
+//    & 0b10111111 (~FLAG_V)
+//    = 0b10110000
+
+
+
+// verbose
+function setFlag(flag, value) {
+  if (value === 0) { // clear bit
+    PS &= ~flag;
+  } else {           // set bit
+    PS |- flag;
+  }
+}
+
+// simplified
+function setFlag(flag, value) {
+  PS = (PS & ~flag) | (-value & flag);
+}
+
+
+
+// set NZ flags from value
+
+function setNZflags(value) {
+  PS = PS & ~(FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | !value << 1;
+}
+
+
+
+// set NZ flags from value and set C
+
+function setNZCflags(value, carry) {
+  PS = PS & ~(FLAG_N | FLAG_Z | FLAG_C)
+       | FLAG_N & value
+       | !value << 1
+       | carry;
+}
+
+
+
+// set NZC flags from value (comparison)
+
+function setCMPflags(value) {
+  PS = PS & ~(FLAG_C | FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | !value << 1
+       | FLAG_C & ~value >> 8;
+}
+
+
+// zero trick
+
+function setNZflags(value) {
+  PS = PS & ~(FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | FLAG_Z & value - 1 >> 7;
+}
+
+function setNZCflags(value, carry) {
+  PS = PS & ~(FLAG_N | FLAG_Z | FLAG_C)
+       | FLAG_N & value
+       | FLAG_Z & value - 1 >> 7
+       | carry;
+}
+
+function setCMPflags(value) {
+  PS = PS & ~(FLAG_C | FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | FLAG_Z & (value & 0xff) - 1 >> 7
+       | FLAG_C & ~value >> 8;
+}
+
+
+
+next(notes): Instructions (Overview)
+back: Addressing Modes (Implementation)

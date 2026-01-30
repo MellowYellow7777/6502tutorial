@@ -1,0 +1,29 @@
+What is the 6502?
+
+The 6502 is an 8-bit microprocessor designed in 1975 by MOS Technology. Looking at the chip, there are 40 pins. Heres a visual, labeled representation (< and > characters point in direction of data travel, = means the pin is bidirectional):
+
+
+          ┌────────────────┐
+    VSS   ┤1             40├ < ~RES
+    RDY > ┤2             39├ > O2
+     O1 < ┤3             38├ < SO
+   ~IRQ > ┤4             37├ < O0
+     NC   ┤5             36├   NC
+   ~NMI > ┤6             35├   NC
+   SYNC < ┤7             34├ > R/W
+    VCC   ┤8             33├ = D0
+     A0 < ┤9             32├ = D1
+     A1 < ┤10    6502    31├ = D2
+     A2 < ┤11            30├ = D3
+     A3 < ┤12            29├ = D4
+     A4 < ┤13            28├ = D5
+     A5 < ┤14            27├ = D6
+     A6 < ┤15            26├ = D7
+     A7 < ┤16            25├ > A15
+     A8 < ┤17            24├ > A14
+     A9 < ┤18            23├ > A13
+    A10 < ┤19            22├ > A12
+    A11 < ┤20            21├   VSS
+          └────────────────┘
+
+next: What is important to us

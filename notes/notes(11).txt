@@ -1,0 +1,296 @@
+Instructions (Implementation)
+
+// load
+
+// verbose
+function LDA(v) {
+  A = v;
+  setNZflags(A);
+}
+
+function LDX(v) {
+  X = v;
+  setNZflags(X);
+}
+
+function LDY(v) {
+  Y = v;
+  setNZflags(Y);
+}
+
+// simplified
+function LDA(v) { setNZflags(A = v); }
+function LDX(v) { setNZflags(X = v); }
+function LDY(v) { setNZflags(Y = v); }
+
+
+
+// store
+
+function STA(p) { RAM[p] = A; }
+function STX(p) { RAM[p] = X; }
+function STY(p) { RAM[p] = Y; }
+
+
+
+// transfer
+
+function TAX() { setNZflags(X = A); }
+function TAY() { setNZflags(Y = A); }
+function TXA() { setNZflags(A = X); }
+function TYA() { setNZflags(A = Y); }
+function TSX() { setNZflags(X = SP);}
+function TXS() { SP = X; }
+
+
+
+// stack
+
+function PHA() { pushStack(A); }
+function PLA() { setNZflags(A = pullStack()); }
+
+function PHP() { pushStack(PS | FLAG_B | FLAG_U); }
+function PLP() { PS = pullStack(); }
+
+
+
+// increment / decrement
+
+function INX() { setNZflags(X = X + 1 & 0xff); }
+function INY() { setNZflags(Y = Y + 1 & 0xff); }
+function DEX() { setNZflags(X = X - 1 & 0xff); }
+function DEY() { setNZflags(Y = Y - 1 & 0xff); }
+
+function INC(p) { setNZflags(RAM[p] = RAM[p] + 1 & 0xff); }
+function DEC(p) { setNZflags(RAM[p] = RAM[p] - 1 & 0xff); }
+
+
+
+// add / sub
+
+function ADC(v) {
+  var c = PS & FLAG_C, r;
+  if (PS & FLAG_D) {
+    r = (A & 0x0f) + (v & 0x0f) + c;
+    if (r > 0x09) { 
+      r = 0x10 | ((r + 6) & 0x0f);
+    }
+    r += (A & 0xf0) + (v & 0xf0);
+    c = r >> 8 | (r >> 7 & (r >> 6 | r >> 5)) & FLAG_C;
+    r += 0x60 * c;
+  } else {
+    r = A + v + c;
+    c = r >> 8 & FLAG_C;
+  }
+  PS = PS & ~(FLAG_C | FLAG_V | FLAG_N | FLAG_Z)
+       | FLAG_N & r
+       | (~(A ^ v) & (A ^ r) & FLAG_N) >> 1
+       | FLAG_Z & (r & 0xff) - 1 >> 7
+       | c;
+  A = r & 0xff;
+}
+
+function SBC(v) { ADC(PS & FLAG_D ? 0x99 - v : ~v & 0xff); }
+
+// no decimal mode
+
+function ADC(v) {
+  var C = PS & FLAG_C;
+  var br = A + v + C;
+  var R = br & 0xff;
+  PS = PS & ~(FLAG_Z | FLAG_V | FLAG_Z | FLAG_C)
+     | FLAG_N & R
+     | FLAG_V & (~(A ^ v) & (A ^ R)) >> 1 & 64
+     | FLAG_Z & R - 1 >> 7
+     | br >> 8;
+  A = R;
+}
+
+function SBC(v) { ADC(~v & 0xff); }
+
+
+
+// compare
+
+function CMP(v) { setCMPflags(A - v); }
+function CPX(v) { setCMPflags(X - v); }
+function CPY(v) { setCMPflags(Y - v); }
+
+
+
+// bitwise
+
+function AND(v) { setNZflags(A &= v); }
+function ORA(v) { setNZflags(A |= v); }
+function EOR(v) { setNZflags(A ^= v); }
+
+
+
+// bit
+
+// Z flag set to A & operand
+// NV flags set to operand
+
+function BIT(v) {
+  PS = PS & ~(FLAG_N | FLAG_V | FLAG_Z)
+       | FLAG_N & v
+       | FLAG_V & v
+       | FLAG_Z & (A & v) - 1 >> 7;
+}
+
+
+
+// shift (accumulator)
+
+function LSR_A() {
+  var c = A & FLAG_C;
+  A >>>= 1;
+  setNZCflags(A,c);
+}
+
+function ASL_A() {
+  var c = A >> 7;
+  A = A << 1 & 0xff;
+  setNZCflags(A,c);
+}
+
+function ROR_A() {
+  var c = A & FLAG_C;
+  A = A >>> 1 | (PS & FLAG_C) << 7;
+  setNZCflags(A,c);
+}
+
+function ROL_A() {
+  var c = A >> 7;
+  A = (A << 1 | PS & FLAG_C) & 0xff;
+  setNZCflags(A,c);
+}
+
+
+
+// shift (memory)
+
+function LSR_M(p) {
+  var v = RAM[p];
+  var c = v & FLAG_C;
+  RAM[p] = v >>>= 1;
+  setNZCflags(v,c);
+}
+
+function ASL_M(p) {
+  var v = RAM[p];
+  var c = v >> 7;
+  RAM[p] = v = v << 1 & 0xff;
+  setNZCflags(v,c);
+}
+
+function ROR_M(p) {
+  var v = RAM[p];
+  var c = v & FLAG_C;
+  RAM[p] = v = v >>> 1 | (PS & FLAG_C) << 7;
+  setNZCflags(v,c);
+}
+
+function ROL_M(p) {
+  var v = RAM[p];
+  var c = v >> 7;
+  RAM[p] = v = (v << 1 | PS & FLAG_C) & 0xff;
+  setNZCflags(v,c);
+}
+
+
+
+// set / clear flags
+
+function SEC() { PS |= FLAG_C; }
+function SEI() { PS |= FLAG_I; }
+function SED() { PS |= FLAG_D; }
+function CLC() { PS &= ~FLAG_C; }
+function CLI() { PS &= ~FLAG_I; }
+function CLD() { PS &= ~FLAG_D; }
+function CLV() { PS &= ~FLAG_V; }
+
+
+
+// branch / jump
+
+function BCS(v) { if (PS & FLAG_C) PC = PC + v & 0xffff; }
+function BEQ(v) { if (PS & FLAG_Z) PC = PC + v & 0xffff; }
+function BVS(v) { if (PS & FLAG_V) PC = PC + v & 0xffff; }
+function BMI(v) { if (PS & FLAG_N) PC = PC + v & 0xffff; }
+
+function BCC(v) { if (~PS & FLAG_C) PC = PC + v & 0xffff; }
+function BNE(v) { if (~PS & FLAG_Z) PC = PC + v & 0xffff; }
+function BVC(v) { if (~PS & FLAG_V) PC = PC + v & 0xffff; }
+function BPL(v) { if (~PS & FLAG_N) PC = PC + v & 0xffff; }
+
+function JMP(p) { PC = p; }
+
+
+
+// jump to subroutine
+
+// PC (minus 1) is pushed onto the stack
+//   high byte first
+//   then low byte
+// PC jumps to the given operand
+
+function JSR(p) {
+  PC--;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  PC = p;
+}
+
+
+// return from subroutine
+
+// return address is pulled from stack
+//   low byte first
+//   then high byte
+// PC jumps to restored address
+
+function RTS() {
+  PC = ((pullStack() | pullStack() << 8) + 1) & 0xffff;
+}
+
+
+
+// break
+
+// BRK is somewhat similar to JSR, but it has a few more steps. Specifically, BRK does:
+//   1. increment PC (to the correct return address)
+//   2. push the PC high byte onto the stack
+//   3. push the PC low byte onto the stack
+//   4. push PS onto the stack (with B and U flags set)
+//   5. set the I flag
+//   6. jump to the value store at the irq vector ($fffe-$ffff)
+
+function BRK() {
+  PC++;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffe);
+}
+
+
+
+// return from interrupt
+
+function RTI() {
+  PS = pullStack();
+  PC = pullStack() | pullStack() << 8;
+}
+
+
+
+// no-op
+
+function NOP() {}
+
+
+
+next(code): Step Function
+back: Instructions (Overview)

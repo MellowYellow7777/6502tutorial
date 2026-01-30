@@ -1,0 +1,84 @@
+Hardware Interrupts
+
+// reset sequence
+//  1. set flags (clear D, set I)
+//  2. set SP = $fd
+//  3. jump PC to reset vector ($fffc-$fffd)
+
+function RES() {
+  PS = PS & ~FLAG_D | FLAG_I;
+  SP = 0xfd;
+  PC = read2Bytes(0xfffc);
+}
+
+// why 0xfd
+/*
+SP ends up at $fd because the 6502 shares some of this logic with the BRK instruction. It actually initializes SP to 0, and then does a couple of ghost pushes to the stack. Although no values are actually put onto the stack at this time because this is done as a read operation instead of a write.
+*/
+
+
+
+// maskable interrupt request (vector at 0xfffe)
+
+function IRQ() {
+  if (PS & FLAG_I) return;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffe);
+}
+
+// see break
+
+function BRK() {
+  PC++;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffe);
+}
+
+// non-maskable interrupt (vector at 0xfffa)
+
+function NMI() {
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffa);
+}
+
+
+
+// triggers
+
+function sendReset() {
+  var _step = step;
+  step = function() {
+    RES();
+    step = _step;
+  }
+}
+
+function sendIRQ() {
+  var _step = step;
+  step = function() {
+    IRQ();
+    step = _step;
+  }
+}
+
+function sendNMI() {
+  var _step = step;
+  step = function() {
+    NMI();
+    step = _step;
+  }
+}
+
+
+
+next(code): Execution
+back: Step Function

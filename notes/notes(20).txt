@@ -1,0 +1,150 @@
+CPU Encapsulation (Implementation)
+
+function cpu6502() {
+
+
+// memory accessors
+// setting these as variable and exposing as pseudo-property
+// this allows for direct reference to the functions within this closure
+
+var readRAM = () => 0;
+var writeRAM = () => 0;
+
+Object.defineProperties(this, {
+  readRAM: {
+    get() { return readRAM; },
+    set(v) { readRAM = v; },
+  },
+  writeRAM: {
+    get() { return writeRAM; },
+    set(v) { writeRAM = v; },
+  },
+});
+
+
+
+// exposing important functions
+
+this.step = () => step();
+this.run = run;
+this.stop = stop;
+this.sendReset = sendReset;
+this.sendIRQ = sendIRQ;
+this.sendNMI = sendNMI;
+
+// why not set step directly?
+// we need to reference the value of step because it changes during interrupts
+
+
+
+// sanitizing data (type coersion)
+
+// general coerce value into integer of a selected bitwidth
+function coerceUint(n,bits) {
+  n = +n;
+  if (isNaN(n)) n = 0;
+  n &= (1 << bits) - 1;
+  return n;
+}
+
+// specific coersions for 1-bit (flags), 8-bit, and 16-bit values
+var coerceFlag = n => coerceUint(n,1);
+var coerceUint8 = n => coerceUint(n,8);
+var coerceUint16 = n => coerceUint(n,16);
+
+// coerce to positive integer (for setting ips)
+function coercePosInt(n) {
+  n = Math.max(0, Math.floor(+n));
+  if (isNaN(n)) n = 0;
+  return n;
+}
+
+
+
+// pseudo-properties for registers, flags, and misc. internal status values
+Object.defineProperties(this, {
+  A: {
+    get() { return A; },
+    set(n) { A = coerceUint8(n); },
+  },
+  X: {
+    get() { return X; },
+    set(n) { X = coerceUint8(n); },
+  },
+  Y: {
+    get() { return Y; },
+    set(n) { Y = coerceUint8(n); },
+  },
+  SP: {
+    get() { return SP; },
+    set(n) { SP = coerceUint8(n); },
+  },
+  // U and B are not real flags and the value of those bits have no effect anywhere
+  PS: {
+    get() { return PS | FLAG_U | FLAG_B; },
+    set(n) { PS = coerceUint8(n); },
+  },
+  PC: {
+    get() { return PC; },
+    set(n) { PC = coerceUint16(n); },
+  },
+  // individual flags, treated like single bit values
+  N: {
+    get() { return (PS & FLAG_N) >> 7; },
+    set(n) { setFlag(FLAG_N, coerceFlag(n)); },
+  },
+  V: {
+    get() { return (PS & FLAG_V) >> 6; },
+    set(n) { setFlag(FLAG_V, coerceFlag(n,1)); },
+  },
+  D: {
+    get() { return (PS & FLAG_D) >> 3; },
+    set(n) { setFlag(FLAG_N, coerceFlag(n,1)); },
+  },
+  I: {
+    get() { return (PS & FLAG_I) >> 2; },
+    set(n) { setFlag(FLAG_V, coerceFlag(n,1)); },
+  },
+  Z: {
+    get() { return (PS & FLAG_Z) >> 1; },
+    set(n) { setFlag(FLAG_N, coerceFlag(n,1)); },
+  },
+  C: {
+    get() { return PS & FLAG_C; },
+    set(n) { setFlag(FLAG_C, coerceFlag(n,1)); },
+  },
+  ips: {
+    get() { return ips; },
+    set(n) { ips = coercePosInt(n); },
+  },
+  // read only; this variable is set via run and stop functions
+  running: {
+    get() { return running; },
+    set(n) {},
+  },
+});
+
+
+
+// direct stack interactions
+
+this.pullStack = pullStack;
+
+// needs to be wrapped because this is an external value going into memory
+this.pushStack = function(value) {
+  pushStack(coerceUint8(value));
+}
+
+// reading what the next pulled value would be
+this.peekStack = function() {
+  return readRAM(0x100 | (SP + 1 & 0xff));
+}
+
+
+
+} // EOF function cpu6502
+
+
+
+next(code): Full Program (up to this point)
+back: CPU Encapsulation (Overview)

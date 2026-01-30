@@ -1,0 +1,1263 @@
+Tracing
+
+
+
+function stepNormal() {
+  var opcode = nextByte();
+  switch (opcode) {
+    case 0x00: BRK(); break;              // BRK imp
+    case 0x01: ORA(readRAMinx()); break;  // ORA inx
+    case 0x05: ORA(readRAMzpg()); break;  // ORA zpg
+    case 0x06: ASL_M(getIDXzpg()); break; // ASL zpg
+    case 0x08: PHP(); break;              // PHP imp
+    case 0x09: ORA(readRAMimm()); break;  // ORA imm
+    case 0x0A: ASL_A(); break;            // ASL acc
+    case 0x0D: ORA(readRAMabs()); break;  // ORA abs
+    case 0x0E: ASL_M(getIDXabs()); break; // ASL abs
+    case 0x10: BPL(readRAMrel()); break;  // BPL rel
+    case 0x11: ORA(readRAMiny()); break;  // ORA iny
+    case 0x15: ORA(readRAMzpx()); break;  // ORA zpx
+    case 0x16: ASL_M(getIDXzpx()); break; // ASL zpx
+    case 0x18: CLC(); break;              // CLC imp
+    case 0x19: ORA(readRAMaby()); break;  // ORA aby
+    case 0x1D: ORA(readRAMabx()); break;  // ORA abx
+    case 0x1E: ASL_M(getIDXabx()); break; // ASL abx
+    case 0x20: JSR(getIDXabs()); break;   // JSR abs
+    case 0x21: AND(readRAMinx()); break;  // AND inx
+    case 0x24: BIT(readRAMzpg()); break;  // BIT zpg
+    case 0x25: AND(readRAMzpg()); break;  // AND zpg
+    case 0x26: ROL_M(getIDXzpg()); break; // ROL zpg
+    case 0x28: PLP(); break;              // PLP imp
+    case 0x29: AND(readRAMimm()); break;  // AND imm
+    case 0x2A: ROL_A(); break;            // ROL acc
+    case 0x2C: BIT(readRAMabs()); break;  // BIT abs
+    case 0x2D: AND(readRAMabs()); break;  // AND abs
+    case 0x2E: ROL_M(getIDXabs()); break; // ROL abs
+    case 0x30: BMI(readRAMrel()); break;  // BMI rel
+    case 0x31: AND(readRAMiny()); break;  // AND iny
+    case 0x35: AND(readRAMzpx()); break;  // AND zpx
+    case 0x36: ROL_M(getIDXzpx()); break; // ROL zpx
+    case 0x38: SEC(); break;              // SEC imp
+    case 0x39: AND(readRAMaby()); break;  // AND aby
+    case 0x3D: AND(readRAMabx()); break;  // AND abx
+    case 0x3E: ROL_M(getIDXabx()); break; // ROL abx
+    case 0x40: RTI(); break;              // RTI imp
+    case 0x41: EOR(readRAMinx()); break;  // EOR inx
+    case 0x45: EOR(readRAMzpg()); break;  // EOR zpg
+    case 0x46: LSR_M(getIDXzpg()); break; // LSR zpg
+    case 0x48: PHA(); break;              // PHA imp
+    case 0x49: EOR(readRAMimm()); break;  // EOR imm
+    case 0x4A: LSR_A(); break;            // LSR acc
+    case 0x4C: JMP(getIDXabs()); break;   // JMP abs
+    case 0x4D: EOR(readRAMabs()); break;  // EOR abs
+    case 0x4E: LSR_M(getIDXabs()); break; // LSR abs
+    case 0x50: BVC(readRAMrel()); break;  // BVC rel
+    case 0x51: EOR(readRAMiny()); break;  // EOR iny
+    case 0x55: EOR(readRAMzpx()); break;  // EOR zpx
+    case 0x56: LSR_M(getIDXzpx()); break; // LSR zpx
+    case 0x58: CLI(); break;              // CLI imp
+    case 0x59: EOR(readRAMaby()); break;  // EOR aby
+    case 0x5D: EOR(readRAMabx()); break;  // EOR abx
+    case 0x5E: LSR_M(getIDXabx()); break; // LSR abx
+    case 0x60: RTS(); break;              // RTS imp
+    case 0x61: ADC(readRAMinx()); break;  // ADC inx
+    case 0x65: ADC(readRAMzpg()); break;  // ADC zpg
+    case 0x66: ROR_M(getIDXzpg()); break; // ROR zpg
+    case 0x68: PLA(); break;              // PLA imp
+    case 0x69: ADC(readRAMimm()); break;  // ADC imm
+    case 0x6A: ROR_A(); break;            // ROR acc
+    case 0x6C: JMP(getIDXind()); break;   // JMP ind
+    case 0x6D: ADC(readRAMabs()); break;  // ADC abs
+    case 0x6E: ROR_M(getIDXabs()); break; // ROR abs
+    case 0x70: BVS(readRAMrel()); break;  // BVS rel
+    case 0x71: ADC(readRAMiny()); break;  // ADC iny
+    case 0x75: ADC(readRAMzpx()); break;  // ADC zpx
+    case 0x76: ROR_M(getIDXzpx()); break; // ROR zpx
+    case 0x78: SEI(); break;              // SEI imp
+    case 0x79: ADC(readRAMaby()); break;  // ADC aby
+    case 0x7D: ADC(readRAMabx()); break;  // ADC abx
+    case 0x7E: ROR_M(getIDXabx()); break; // ROR abx
+    case 0x81: STA(getIDXinx()); break;   // STA inx
+    case 0x84: STY(getIDXzpg()); break;   // STY zpg
+    case 0x85: STA(getIDXzpg()); break;   // STA zpg
+    case 0x86: STX(getIDXzpg()); break;   // STX zpg
+    case 0x88: DEY(); break;              // DEY imp
+    case 0x8A: TXA(); break;              // TXA imp
+    case 0x8C: STY(getIDXabs()); break;   // STY abs
+    case 0x8D: STA(getIDXabs()); break;   // STA abs
+    case 0x8E: STX(getIDXabs()); break;   // STX abs
+    case 0x90: BCC(readRAMrel()); break;  // BCC rel
+    case 0x91: STA(getIDXiny()); break;   // STA iny
+    case 0x94: STY(getIDXzpx()); break;   // STY zpx
+    case 0x95: STA(getIDXzpx()); break;   // STA zpx
+    case 0x96: STX(getIDXzpy()); break;   // STX zpy
+    case 0x98: TYA(); break;              // TYA imp
+    case 0x99: STA(getIDXaby()); break;   // STA aby
+    case 0x9A: TXS(); break;              // TXS imp
+    case 0x9D: STA(getIDXabx()); break;   // STA abx
+    case 0xA0: LDY(readRAMimm()); break;  // LDY imm
+    case 0xA1: LDA(readRAMinx()); break;  // LDA inx
+    case 0xA2: LDX(readRAMimm()); break;  // LDX imm
+    case 0xA4: LDY(readRAMzpg()); break;  // LDY zpg
+    case 0xA5: LDA(readRAMzpg()); break;  // LDA zpg
+    case 0xA6: LDX(readRAMzpg()); break;  // LDX zpg
+    case 0xA8: TAY(); break;              // TAY imp
+    case 0xA9: LDA(readRAMimm()); break;  // LDA imm
+    case 0xAA: TAX(); break;              // TAX imp
+    case 0xAC: LDY(readRAMabs()); break;  // LDY abs
+    case 0xAD: LDA(readRAMabs()); break;  // LDA abs
+    case 0xAE: LDX(readRAMabs()); break;  // LDX abs
+    case 0xB0: BCS(readRAMrel()); break;  // BCS rel
+    case 0xB1: LDA(readRAMiny()); break;  // LDA iny
+    case 0xB4: LDY(readRAMzpx()); break;  // LDY zpx
+    case 0xB5: LDA(readRAMzpx()); break;  // LDA zpx
+    case 0xB6: LDX(readRAMzpy()); break;  // LDX zpy
+    case 0xB8: CLV(); break;              // CLV imp
+    case 0xB9: LDA(readRAMaby()); break;  // LDA aby
+    case 0xBA: TSX(); break;              // TSX imp
+    case 0xBC: LDY(readRAMabx()); break;  // LDY abx
+    case 0xBD: LDA(readRAMabx()); break;  // LDA abx
+    case 0xBE: LDX(readRAMaby()); break;  // LDX aby
+    case 0xC0: CPY(readRAMimm()); break;  // CPY imm
+    case 0xC1: CMP(readRAMinx()); break;  // CMP inx
+    case 0xC4: CPY(readRAMzpg()); break;  // CPY zpg
+    case 0xC5: CMP(readRAMzpg()); break;  // CMP zpg
+    case 0xC6: DEC(getIDXzpg()); break;   // DEC zpg
+    case 0xC8: INY(); break;              // INY imp
+    case 0xC9: CMP(readRAMimm()); break;  // CMP imm
+    case 0xCA: DEX(); break;              // DEX imp
+    case 0xCC: CPY(readRAMabs()); break;  // CPY abs
+    case 0xCD: CMP(readRAMabs()); break;  // CMP abs
+    case 0xCE: DEC(getIDXabs()); break;   // DEC abs
+    case 0xD0: BNE(readRAMrel()); break;  // BNE rel
+    case 0xD1: CMP(readRAMiny()); break;  // CMP iny
+    case 0xD5: CMP(readRAMzpx()); break;  // CMP zpx
+    case 0xD6: DEC(getIDXzpx()); break;   // DEC zpx
+    case 0xD8: CLD(); break;              // CLD imp
+    case 0xD9: CMP(readRAMaby()); break;  // CMP aby
+    case 0xDD: CMP(readRAMabx()); break;  // CMP abx
+    case 0xDE: DEC(getIDXabx()); break;   // DEC abx
+    case 0xE0: CPX(readRAMimm()); break;  // CPX imm
+    case 0xE1: SBC(readRAMinx()); break;  // SBC inx
+    case 0xE4: CPX(readRAMzpg()); break;  // CPX zpg
+    case 0xE5: SBC(readRAMzpg()); break;  // SBC zpg
+    case 0xE6: INC(getIDXzpg()); break;   // INC zpg
+    case 0xE8: INX(); break;              // INX imp
+    case 0xE9: SBC(readRAMimm()); break;  // SBC imm
+    case 0xEA: NOP(); break;              // NOP imp
+    case 0xEC: CPX(readRAMabs()); break;  // CPX abs
+    case 0xED: SBC(readRAMabs()); break;  // SBC abs
+    case 0xEE: INC(getIDXabs()); break;   // INC abs
+    case 0xF0: BEQ(readRAMrel()); break;  // BEQ rel
+    case 0xF1: SBC(readRAMiny()); break;  // SBC iny
+    case 0xF5: SBC(readRAMzpx()); break;  // SBC zpx
+    case 0xF6: INC(getIDXzpx()); break;   // INC zpx
+    case 0xF8: SED(); break;              // SED imp
+    case 0xF9: SBC(readRAMaby()); break;  // SBC aby
+    case 0xFD: SBC(readRAMabx()); break;  // SBC abx
+    case 0xFE: INC(getIDXabx()); break;   // INC abx
+    default: NOP(); break;                // default to nop
+  }
+}
+
+function stepTrace() {
+  var opcode = nextByte(),
+      instruction,
+      instructionFn,
+      argumentFn,
+      argument;
+  switch (opcode) {
+    case 0x00: 
+      instruction = 'BRK imp';
+      instructionFn = 'BRK';
+      argumentFn = 'undefined';
+      argument = undefined;
+      BRK();
+      break;
+    case 0x01:
+      instruction = 'ORA inx';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      ORA(argument);
+      break;
+    case 0x05:
+      instruction = 'ORA zpg';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      ORA(argument);
+      break;
+    case 0x06:
+      instruction = 'ASL zpg';
+      instructionFn = 'ASL_M';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      ASL_M(argument);
+      break;
+    case 0x08: 
+      instruction = 'PHP imp';
+      instructionFn = 'PHP';
+      argumentFn = 'undefined';
+      argument = undefined;
+      PHP();
+      break;
+    case 0x09:
+      instruction = 'ORA imm';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      ORA(argument);
+      break;
+    case 0x0A: 
+      instruction = 'ASL acc';
+      instructionFn = 'ASL_A';
+      argumentFn = 'undefined';
+      argument = undefined;
+      ASL_A();
+      break;
+    case 0x0D:
+      instruction = 'ORA abs';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      ORA(argument);
+      break;
+    case 0x0E:
+      instruction = 'ASL abs';
+      instructionFn = 'ASL_M';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      ASL_M(argument);
+      break;
+    case 0x10:
+      instruction = 'BPL rel';
+      instructionFn = 'BPL';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BPL(argument);
+      break;
+    case 0x11:
+      instruction = 'ORA iny';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      ORA(argument);
+      break;
+    case 0x15:
+      instruction = 'ORA zpx';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      ORA(argument);
+      break;
+    case 0x16:
+      instruction = 'ASL zpx';
+      instructionFn = 'ASL_M';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      ASL_M(argument);
+      break;
+    case 0x18: 
+      instruction = 'CLC imp';
+      instructionFn = 'CLC';
+      argumentFn = 'undefined';
+      argument = undefined;
+      CLC();
+      break;
+    case 0x19:
+      instruction = 'ORA aby';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      ORA(argument);
+      break;
+    case 0x1D:
+      instruction = 'ORA abx';
+      instructionFn = 'ORA';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      ORA(argument);
+      break;
+    case 0x1E:
+      instruction = 'ASL abx';
+      instructionFn = 'ASL_M';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      ASL_M(argument);
+      break;
+    case 0x20:
+      instruction = 'JSR abs';
+      instructionFn = 'JSR';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      JSR(argument);
+      break;
+    case 0x21:
+      instruction = 'AND inx';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      AND(argument);
+      break;
+    case 0x24:
+      instruction = 'BIT zpg';
+      instructionFn = 'BIT';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      BIT(argument);
+      break;
+    case 0x25:
+      instruction = 'AND zpg';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      AND(argument);
+      break;
+    case 0x26:
+      instruction = 'ROL zpg';
+      instructionFn = 'ROL_M';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      ROL_M(argument);
+      break;
+    case 0x28: 
+      instruction = 'PLP imp';
+      instructionFn = 'PLP';
+      argumentFn = 'undefined';
+      argument = undefined;
+      PLP();
+      break;
+    case 0x29:
+      instruction = 'AND imm';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      AND(argument);
+      break;
+    case 0x2A: 
+      instruction = 'ROL acc';
+      instructionFn = 'ROL_A';
+      argumentFn = 'undefined';
+      argument = undefined;
+      ROL_A();
+      break;
+    case 0x2C:
+      instruction = 'BIT abs';
+      instructionFn = 'BIT';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      BIT(argument);
+      break;
+    case 0x2D:
+      instruction = 'AND abs';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      AND(argument);
+      break;
+    case 0x2E:
+      instruction = 'ROL abs';
+      instructionFn = 'ROL_M';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      ROL_M(argument);
+      break;
+    case 0x30:
+      instruction = 'BMI rel';
+      instructionFn = 'BMI';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BMI(argument);
+      break;
+    case 0x31:
+      instruction = 'AND iny';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      AND(argument);
+      break;
+    case 0x35:
+      instruction = 'AND zpx';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      AND(argument);
+      break;
+    case 0x36:
+      instruction = 'ROL zpx';
+      instructionFn = 'ROL_M';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      ROL_M(argument);
+      break;
+    case 0x38: 
+      instruction = 'SEC imp';
+      instructionFn = 'SEC';
+      argumentFn = 'undefined';
+      argument = undefined;
+      SEC();
+      break;
+    case 0x39:
+      instruction = 'AND aby';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      AND(argument);
+      break;
+    case 0x3D:
+      instruction = 'AND abx';
+      instructionFn = 'AND';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      AND(argument);
+      break;
+    case 0x3E:
+      instruction = 'ROL abx';
+      instructionFn = 'ROL_M';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      ROL_M(argument);
+      break;
+    case 0x40: 
+      instruction = 'RTI imp';
+      instructionFn = 'RTI';
+      argumentFn = 'undefined';
+      argument = undefined;
+      RTI();
+      break;
+    case 0x41:
+      instruction = 'EOR inx';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      EOR(argument);
+      break;
+    case 0x45:
+      instruction = 'EOR zpg';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      EOR(argument);
+      break;
+    case 0x46:
+      instruction = 'LSR zpg';
+      instructionFn = 'LSR_M';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      LSR_M(argument);
+      break;
+    case 0x48: 
+      instruction = 'PHA imp';
+      instructionFn = 'PHA';
+      argumentFn = 'undefined';
+      argument = undefined;
+      PHA();
+      break;
+    case 0x49:
+      instruction = 'EOR imm';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      EOR(argument);
+      break;
+    case 0x4A: 
+      instruction = 'LSR acc';
+      instructionFn = 'LSR_A';
+      argumentFn = 'undefined';
+      argument = undefined;
+      LSR_A();
+      break;
+    case 0x4C:
+      instruction = 'JMP abs';
+      instructionFn = 'JMP';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      JMP(argument);
+      break;
+    case 0x4D:
+      instruction = 'EOR abs';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      EOR(argument);
+      break;
+    case 0x4E:
+      instruction = 'LSR abs';
+      instructionFn = 'LSR_M';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      LSR_M(argument);
+      break;
+    case 0x50:
+      instruction = 'BVC rel';
+      instructionFn = 'BVC';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BVC(argument);
+      break;
+    case 0x51:
+      instruction = 'EOR iny';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      EOR(argument);
+      break;
+    case 0x55:
+      instruction = 'EOR zpx';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      EOR(argument);
+      break;
+    case 0x56:
+      instruction = 'LSR zpx';
+      instructionFn = 'LSR_M';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      LSR_M(argument);
+      break;
+    case 0x58: 
+      instruction = 'CLI imp';
+      instructionFn = 'CLI';
+      argumentFn = 'undefined';
+      argument = undefined;
+      CLI();
+      break;
+    case 0x59:
+      instruction = 'EOR aby';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      EOR(argument);
+      break;
+    case 0x5D:
+      instruction = 'EOR abx';
+      instructionFn = 'EOR';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      EOR(argument);
+      break;
+    case 0x5E:
+      instruction = 'LSR abx';
+      instructionFn = 'LSR_M';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      LSR_M(argument);
+      break;
+    case 0x60: 
+      instruction = 'RTS imp';
+      instructionFn = 'RTS';
+      argumentFn = 'undefined';
+      argument = undefined;
+      RTS();
+      break;
+    case 0x61:
+      instruction = 'ADC inx';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      ADC(argument);
+      break;
+    case 0x65:
+      instruction = 'ADC zpg';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      ADC(argument);
+      break;
+    case 0x66:
+      instruction = 'ROR zpg';
+      instructionFn = 'ROR_M';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      ROR_M(argument);
+      break;
+    case 0x68: 
+      instruction = 'PLA imp';
+      instructionFn = 'PLA';
+      argumentFn = 'undefined';
+      argument = undefined;
+      PLA();
+      break;
+    case 0x69:
+      instruction = 'ADC imm';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      ADC(argument);
+      break;
+    case 0x6A: 
+      instruction = 'ROR acc';
+      instructionFn = 'ROR_A';
+      argumentFn = 'undefined';
+      argument = undefined;
+      ROR_A();
+      break;
+    case 0x6C:
+      instruction = 'JMP ind';
+      instructionFn = 'JMP';
+      argumentFn = 'getIDXind';
+      argument = getIDXind();
+      JMP(argument);
+      break;
+    case 0x6D:
+      instruction = 'ADC abs';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      ADC(argument);
+      break;
+    case 0x6E:
+      instruction = 'ROR abs';
+      instructionFn = 'ROR_M';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      ROR_M(argument);
+      break;
+    case 0x70:
+      instruction = 'BVS rel';
+      instructionFn = 'BVS';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BVS(argument);
+      break;
+    case 0x71:
+      instruction = 'ADC iny';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      ADC(argument);
+      break;
+    case 0x75:
+      instruction = 'ADC zpx';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      ADC(argument);
+      break;
+    case 0x76:
+      instruction = 'ROR zpx';
+      instructionFn = 'ROR_M';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      ROR_M(argument);
+      break;
+    case 0x78: 
+      instruction = 'SEI imp';
+      instructionFn = 'SEI';
+      argumentFn = 'undefined';
+      argument = undefined;
+      SEI();
+      break;
+    case 0x79:
+      instruction = 'ADC aby';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      ADC(argument);
+      break;
+    case 0x7D:
+      instruction = 'ADC abx';
+      instructionFn = 'ADC';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      ADC(argument);
+      break;
+    case 0x7E:
+      instruction = 'ROR abx';
+      instructionFn = 'ROR_M';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      ROR_M(argument);
+      break;
+    case 0x81:
+      instruction = 'STA inx';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXinx';
+      argument = getIDXinx();
+      STA(argument);
+      break;
+    case 0x84:
+      instruction = 'STY zpg';
+      instructionFn = 'STY';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      STY(argument);
+      break;
+    case 0x85:
+      instruction = 'STA zpg';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      STA(argument);
+      break;
+    case 0x86:
+      instruction = 'STX zpg';
+      instructionFn = 'STX';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      STX(argument);
+      break;
+    case 0x88: 
+      instruction = 'DEY imp';
+      instructionFn = 'DEY';
+      argumentFn = 'undefined';
+      argument = undefined;
+      DEY();
+      break;
+    case 0x8A: 
+      instruction = 'TXA imp';
+      instructionFn = 'TXA';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TXA();
+      break;
+    case 0x8C:
+      instruction = 'STY abs';
+      instructionFn = 'STY';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      STY(argument);
+      break;
+    case 0x8D:
+      instruction = 'STA abs';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      STA(argument);
+      break;
+    case 0x8E:
+      instruction = 'STX abs';
+      instructionFn = 'STX';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      STX(argument);
+      break;
+    case 0x90:
+      instruction = 'BCC rel';
+      instructionFn = 'BCC';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BCC(argument);
+      break;
+    case 0x91:
+      instruction = 'STA iny';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXiny';
+      argument = getIDXiny();
+      STA(argument);
+      break;
+    case 0x94:
+      instruction = 'STY zpx';
+      instructionFn = 'STY';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      STY(argument);
+      break;
+    case 0x95:
+      instruction = 'STA zpx';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      STA(argument);
+      break;
+    case 0x96:
+      instruction = 'STX zpy';
+      instructionFn = 'STX';
+      argumentFn = 'getIDXzpy';
+      argument = getIDXzpy();
+      STX(argument);
+      break;
+    case 0x98: 
+      instruction = 'TYA imp';
+      instructionFn = 'TYA';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TYA();
+      break;
+    case 0x99:
+      instruction = 'STA aby';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXaby';
+      argument = getIDXaby();
+      STA(argument);
+      break;
+    case 0x9A: 
+      instruction = 'TXS imp';
+      instructionFn = 'TXS';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TXS();
+      break;
+    case 0x9D:
+      instruction = 'STA abx';
+      instructionFn = 'STA';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      STA(argument);
+      break;
+    case 0xA0:
+      instruction = 'LDY imm';
+      instructionFn = 'LDY';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      LDY(argument);
+      break;
+    case 0xA1:
+      instruction = 'LDA inx';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      LDA(argument);
+      break;
+    case 0xA2:
+      instruction = 'LDX imm';
+      instructionFn = 'LDX';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      LDX(argument);
+      break;
+    case 0xA4:
+      instruction = 'LDY zpg';
+      instructionFn = 'LDY';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      LDY(argument);
+      break;
+    case 0xA5:
+      instruction = 'LDA zpg';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      LDA(argument);
+      break;
+    case 0xA6:
+      instruction = 'LDX zpg';
+      instructionFn = 'LDX';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      LDX(argument);
+      break;
+    case 0xA8: 
+      instruction = 'TAY imp';
+      instructionFn = 'TAY';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TAY();
+      break;
+    case 0xA9:
+      instruction = 'LDA imm';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      LDA(argument);
+      break;
+    case 0xAA: 
+      instruction = 'TAX imp';
+      instructionFn = 'TAX';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TAX();
+      break;
+    case 0xAC:
+      instruction = 'LDY abs';
+      instructionFn = 'LDY';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      LDY(argument);
+      break;
+    case 0xAD:
+      instruction = 'LDA abs';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      LDA(argument);
+      break;
+    case 0xAE:
+      instruction = 'LDX abs';
+      instructionFn = 'LDX';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      LDX(argument);
+      break;
+    case 0xB0:
+      instruction = 'BCS rel';
+      instructionFn = 'BCS';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BCS(argument);
+      break;
+    case 0xB1:
+      instruction = 'LDA iny';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      LDA(argument);
+      break;
+    case 0xB4:
+      instruction = 'LDY zpx';
+      instructionFn = 'LDY';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      LDY(argument);
+      break;
+    case 0xB5:
+      instruction = 'LDA zpx';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      LDA(argument);
+      break;
+    case 0xB6:
+      instruction = 'LDX zpy';
+      instructionFn = 'LDX';
+      argumentFn = 'readRAMzpy';
+      argument = readRAMzpy();
+      LDX(argument);
+      break;
+    case 0xB8: 
+      instruction = 'CLV imp';
+      instructionFn = 'CLV';
+      argumentFn = 'undefined';
+      argument = undefined;
+      CLV();
+      break;
+    case 0xB9:
+      instruction = 'LDA aby';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      LDA(argument);
+      break;
+    case 0xBA: 
+      instruction = 'TSX imp';
+      instructionFn = 'TSX';
+      argumentFn = 'undefined';
+      argument = undefined;
+      TSX();
+      break;
+    case 0xBC:
+      instruction = 'LDY abx';
+      instructionFn = 'LDY';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      LDY(argument);
+      break;
+    case 0xBD:
+      instruction = 'LDA abx';
+      instructionFn = 'LDA';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      LDA(argument);
+      break;
+    case 0xBE:
+      instruction = 'LDX aby';
+      instructionFn = 'LDX';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      LDX(argument);
+      break;
+    case 0xC0:
+      instruction = 'CPY imm';
+      instructionFn = 'CPY';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      CPY(argument);
+      break;
+    case 0xC1:
+      instruction = 'CMP inx';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      CMP(argument);
+      break;
+    case 0xC4:
+      instruction = 'CPY zpg';
+      instructionFn = 'CPY';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      CPY(argument);
+      break;
+    case 0xC5:
+      instruction = 'CMP zpg';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      CMP(argument);
+      break;
+    case 0xC6:
+      instruction = 'DEC zpg';
+      instructionFn = 'DEC';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      DEC(argument);
+      break;
+    case 0xC8: 
+      instruction = 'INY imp';
+      instructionFn = 'INY';
+      argumentFn = 'undefined';
+      argument = undefined;
+      INY();
+      break;
+    case 0xC9:
+      instruction = 'CMP imm';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      CMP(argument);
+      break;
+    case 0xCA: 
+      instruction = 'DEX imp';
+      instructionFn = 'DEX';
+      argumentFn = 'undefined';
+      argument = undefined;
+      DEX();
+      break;
+    case 0xCC:
+      instruction = 'CPY abs';
+      instructionFn = 'CPY';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      CPY(argument);
+      break;
+    case 0xCD:
+      instruction = 'CMP abs';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      CMP(argument);
+      break;
+    case 0xCE:
+      instruction = 'DEC abs';
+      instructionFn = 'DEC';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      DEC(argument);
+      break;
+    case 0xD0:
+      instruction = 'BNE rel';
+      instructionFn = 'BNE';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BNE(argument);
+      break;
+    case 0xD1:
+      instruction = 'CMP iny';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      CMP(argument);
+      break;
+    case 0xD5:
+      instruction = 'CMP zpx';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      CMP(argument);
+      break;
+    case 0xD6:
+      instruction = 'DEC zpx';
+      instructionFn = 'DEC';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      DEC(argument);
+      break;
+    case 0xD8: 
+      instruction = 'CLD imp';
+      instructionFn = 'CLD';
+      argumentFn = 'undefined';
+      argument = undefined;
+      CLD();
+      break;
+    case 0xD9:
+      instruction = 'CMP aby';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      CMP(argument);
+      break;
+    case 0xDD:
+      instruction = 'CMP abx';
+      instructionFn = 'CMP';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      CMP(argument);
+      break;
+    case 0xDE:
+      instruction = 'DEC abx';
+      instructionFn = 'DEC';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      DEC(argument);
+      break;
+    case 0xE0:
+      instruction = 'CPX imm';
+      instructionFn = 'CPX';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      CPX(argument);
+      break;
+    case 0xE1:
+      instruction = 'SBC inx';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMinx';
+      argument = readRAMinx();
+      SBC(argument);
+      break;
+    case 0xE4:
+      instruction = 'CPX zpg';
+      instructionFn = 'CPX';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      CPX(argument);
+      break;
+    case 0xE5:
+      instruction = 'SBC zpg';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMzpg';
+      argument = readRAMzpg();
+      SBC(argument);
+      break;
+    case 0xE6:
+      instruction = 'INC zpg';
+      instructionFn = 'INC';
+      argumentFn = 'getIDXzpg';
+      argument = getIDXzpg();
+      INC(argument);
+      break;
+    case 0xE8: 
+      instruction = 'INX imp';
+      instructionFn = 'INX';
+      argumentFn = 'undefined';
+      argument = undefined;
+      INX();
+      break;
+    case 0xE9:
+      instruction = 'SBC imm';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMimm';
+      argument = readRAMimm();
+      SBC(argument);
+      break;
+    case 0xEA: 
+      instruction = 'NOP imp';
+      instructionFn = 'NOP';
+      argumentFn = 'undefined';
+      argument = undefined;
+      NOP();
+      break;
+    case 0xEC:
+      instruction = 'CPX abs';
+      instructionFn = 'CPX';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      CPX(argument);
+      break;
+    case 0xED:
+      instruction = 'SBC abs';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMabs';
+      argument = readRAMabs();
+      SBC(argument);
+      break;
+    case 0xEE:
+      instruction = 'INC abs';
+      instructionFn = 'INC';
+      argumentFn = 'getIDXabs';
+      argument = getIDXabs();
+      INC(argument);
+      break;
+    case 0xF0:
+      instruction = 'BEQ rel';
+      instructionFn = 'BEQ';
+      argumentFn = 'readRAMrel';
+      argument = readRAMrel();
+      BEQ(argument);
+      break;
+    case 0xF1:
+      instruction = 'SBC iny';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMiny';
+      argument = readRAMiny();
+      SBC(argument);
+      break;
+    case 0xF5:
+      instruction = 'SBC zpx';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMzpx';
+      argument = readRAMzpx();
+      SBC(argument);
+      break;
+    case 0xF6:
+      instruction = 'INC zpx';
+      instructionFn = 'INC';
+      argumentFn = 'getIDXzpx';
+      argument = getIDXzpx();
+      INC(argument);
+      break;
+    case 0xF8: 
+      instruction = 'SED imp';
+      instructionFn = 'SED';
+      argumentFn = 'undefined';
+      argument = undefined;
+      SED();
+      break;
+    case 0xF9:
+      instruction = 'SBC aby';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMaby';
+      argument = readRAMaby();
+      SBC(argument);
+      break;
+    case 0xFD:
+      instruction = 'SBC abx';
+      instructionFn = 'SBC';
+      argumentFn = 'readRAMabx';
+      argument = readRAMabx();
+      SBC(argument);
+      break;
+    case 0xFE:
+      instruction = 'INC abx';
+      instructionFn = 'INC';
+      argumentFn = 'getIDXabx';
+      argument = getIDXabx();
+      INC(argument);
+      break;
+    default:
+      instruction = '??? ???';
+      instructionFn = 'NOP';
+      argumentFn = 'undefined';
+      argument = undefined;
+      NOP();
+      break;
+  }
+  if (argumentFn === 'undefined') {
+console.log(`Instruction: ${instruction}
+Running: ${instructionFn}()`);
+  } else {
+console.log(`Instruction: ${instruction}
+Running: ${instructionFn}(${argument})`)
+  }
+}
+
+var step = stepNormal;
+
+var tracing = false;
+
+Object.defineProperty(this, 'tracing', {
+  get() { return tracing; },
+  set(v) {
+    if (v) {
+      tracing = true;
+      step = stepTrace;
+    } else {
+      tracing = false;
+      step = stepNormal;
+    }
+  },
+});
+
+
+
+back: Running Test (again)

@@ -1,0 +1,140 @@
+Factoring Out RAM
+
+
+
+// dummy functions
+
+var readRAM = () => 0;
+var writeRAM = () => 0;
+
+
+
+// updates
+
+// remove this line:
+// var RAM = new Uint8Array(0x10000).fill(0); 
+
+
+
+// memory accessors
+
+function nextByte() {
+  var value = readRAM(PC);
+  PC = PC + 1 & 0xffff;
+  return value;
+}
+
+function next2Bytes() {
+  var value = readRAM(PC) | readRAM(PC+1 & 0xffff) << 8;
+  PC = PC + 2 & 0xffff;
+  return value;
+}
+
+function read2Bytes(address) {
+  return readRAM(address)
+       | readRAM(address+1 & 0xffff) << 8;
+}
+
+function read2BytesZpg(address) {
+  return readRAM(address & 0xff)
+       | readRAM(address+1 & 0xff) << 8;
+}
+
+
+
+// addressing modes (reading value)
+
+function readRAMzpg() {
+  return readRAM(nextByte());
+}
+
+function readRAMzpx() {
+  return readRAM(nextByte() + X & 0xff);
+}
+
+function readRAMzpy() {
+  return readRAM(nextByte() + Y & 0xff);
+}
+
+function readRAMabs() {
+  return readRAM(next2Bytes());
+}
+
+function readRAMabx() {
+  return readRAM(next2Bytes() + X & 0xffff);
+}
+
+function readRAMaby() {
+  return readRAM(next2Bytes() + Y & 0xffff);
+}
+
+function readRAMinx() {
+  return readRAM(read2BytesZpg(nextByte() + X));
+}
+
+function readRAMiny() {
+  return readRAM(read2BytesZpg(nextByte()) + Y & 0xffff);
+}
+
+function getIDXind() {
+  var p = next2Bytes();
+  return readRAM(p) | readRAM((p & 0xff00) | ((p + 1) & 0xff)) << 8;
+}
+
+
+
+// stack
+
+function pushStack(value) {
+  writeRAM(0x100 | SP, value);
+  SP = SP - 1 & 0xff;
+}
+
+function pullStack() {
+  SP = SP + 1 & 0xff;
+  return readRAM(0x100 | SP);
+}
+
+
+
+// instructions
+
+function STA(p) { writeRAM(p, A); }
+function STX(p) { writeRAM(p, X); }
+function STY(p) { writeRAM(p, Y); }
+
+function INC(p) { setNZflags(writeRAM(p, readRAM(p) + 1 & 0xff)); }
+function DEC(p) { setNZflags(writeRAM(p, readRAM(p) - 1 & 0xff)); }
+
+function LSR_M(p) {
+  var v = readRAM(p);
+  var c = v & FLAG_C;
+  writeRAM(p, v >>>= 1);
+  setNZCflags(v,c);
+}
+
+function ASL_M(p) {
+  var v = readRAM(p);
+  var c = v >> 7;
+  writeRAM(p, v = v << 1 & 0xff);
+  setNZCflags(v,c);
+}
+
+function ROR_M(p) {
+  var v = readRAM(p);
+  var c = v & FLAG_C;
+  writeRAM(p, v = v >>> 1 | (PS & FLAG_C) << 7);
+  setNZCflags(v,c);
+}
+
+function ROL_M(p) {
+  var v = readRAM(p);
+  var c = v >> 7;
+  writeRAM(p, v = (v << 1 | PS & FLAG_C) & 0xff);
+  setNZCflags(v,c);
+}
+
+
+
+next(notes): CPU Encapsulation (Overview)
+back: Functional Test Program

@@ -1,0 +1,21 @@
+Memory
+
+The 6502 has a 16-bit wide addressing range. Those 16 address pins are what you would connect your RAMs, ROMs, and IO devices to. To start off, we will just say we have 1 65kb RAM connected to all 16 pins. 
+
+There are a couple pre-designated locations/ranges in RAM:
+
+$0000-$00ff - Zero Page
+$0100-$01ff - Stack
+$0200-$fff9 - Free Fange Memory
+$fffa-$fffb - IRQ Vector
+$fffc-$fffd - Reset Vector
+$fffe-$ffff - NMI Vector
+
+Zero Page - The 6502 has dedicated instructions that operate faster and use fewer bytes when accessing here. 
+
+Stack - Data is written to and read from this area by combining a $01 high byte with the SP as the low byte, where the SP automatically decrements/increments as data is pushed/pulled.
+
+Interrupt Vectors - These hold 16-bit jump locations where the processor jumps to when the corresponding interrupt is sent.
+
+next(code): Initializing Registers and Memory
+back: On Data Representation

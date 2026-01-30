@@ -1,0 +1,122 @@
+Addressing Modes (Overview)
+
+The 6502 has several ways of retrieving values from memory to use as arguments for any given operation. These are called addressing modes. Each of the addressing modes supported are as follows. I will be putting a 3 letter abbriviation in parenthesis as well, which i will be using throughout.
+
+Mode		abbr.
+Implied		imp
+Accumulator	acc
+Immediate	imm
+Zero Page	zpg
+Zero Page X	zpx
+Zero Page Y	zpy
+Absolute	abs
+Absolute X	abx
+Absolute Y	aby
+Indirect	ind
+Indirect X	inx
+Indirect Y	iny
+Relative	rel
+
+
+
+Detail:
+
+Implied (imp)
+
+implied action, no operand.
+
+   TAX        ; transfer A to X
+
+
+
+Accumulator (acc)
+
+this mode is really the same as implied, as ther is no operand given. it is implied that the operation be done to the accumulator.
+
+   LSR        ; logical shift right (on accumulator).
+   LSR A      ; also valid syntax and does the same thing.
+
+
+
+Immediate (imm)
+
+operand is the value located immediately after the opcode.
+
+   LDA #$10   ; load A with immediate value $10.
+
+
+
+Zero Page (zpg)
+
+operand is retreived by using the next byte as a zero page address.
+
+   LDA $10     ; load A with the value at memory address $10.
+
+
+
+Zero Page X (zpx) / Zero Page Y (zpy)
+
+zero page address+X or +Y. resulting address wraps around at $ff.
+
+   LDA $10,X   ; load A with the value at memory address $10+X
+   LDX $10,Y   ; load X with the value at memory address $10+Y
+
+
+
+Absolute (abs)
+
+operand is retreived by using the next 2 bytes as an absolute address.
+
+   LDA $1234   ; load A with the value at memory address $1234
+
+
+
+Absolute X (abx) / Absolute Y (aby)
+
+absolute address+X or +Y. resulting address wraps around at $ffff.
+
+   LDA $1234,X ; load A with the value at memory address $1234+X
+   LDX $1234,Y ; load X with the value at memory address $1234+Y
+
+
+
+Indirect (ind)
+
+this is does the same thing as absolute mode, except the next 2 bytes are used as an absolute address to read 2 more bytes (instead of 1). this is only used in jump instructions to set PC.
+
+   JMP ($1234) ; jump to the 2 byte value at memory addresses $1234 and $1235
+
+
+
+Indirect X (inx)
+
+this is like fetching 2 bytes using zero page x mode, then doing an absolute mode at that address.
+
+   LDA ($10,X) ; first, add $10 + X
+               ; next, get the 2 byte value at $10 + X and $10 + X + 1
+               ; finally, load A with the value at that address
+
+
+
+Indirect Y (iny)
+
+this is like fetching 2 bytes using zero page mode, then doing an absolute y mode at that address.
+
+   LDA ($10),Y ; first, get the 2 byte value at $10 and $10 + 1
+               ; next, add that value + Y
+               ; finally, load A with the value at that address
+
+
+
+Relative (rel)
+
+used for branch instructions, the next byte is used as a signed 8-bit offset to add to the PC.
+
+label:
+   DEX         ; decrement x
+   BNE label   ; if the result was not equal to zero, branch
+
+
+
+next(code): Addressing Modes (Implementation)
+back: Memory Access (Implementation)

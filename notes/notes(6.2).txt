@@ -1,0 +1,46 @@
+Memory Access (Implementation)
+
+// for reading 2 byte value stored in memory
+
+// verbose:
+
+function read2Bytes(address) {
+  var lo = RAM[address+0 & 0xffff];
+  var hi = RAM[address+1 & 0xffff];
+  return hi << 8 | lo;
+}
+
+// simplified:
+
+function read2Bytes(address) {
+  return RAM[address]
+       | RAM[address+1 & 0xffff] << 8;
+}
+
+
+
+// for reading the next byte (or, next 2 bytes) at the address the PC is pointing to
+
+function nextByte() {
+  var value = RAM[PC];
+  PC = PC + 1 & 0xffff;
+  return value;
+}
+
+function next2Bytes() {
+  var value = RAM[PC] | RAM[PC+1 & 0xffff] << 8;
+  PC = PC + 2 & 0xffff;
+  return value;
+}
+
+
+
+// for reading 2 bytes from the zero page
+
+function read2BytesZpg(address) {
+  return RAM[address & 0xff]
+       | RAM[address+1 & 0xff] << 8;
+}
+
+next(notes): Addressing Modes (Overview)
+back: Memory Access (Overview)

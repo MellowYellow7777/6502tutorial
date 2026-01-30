@@ -1,0 +1,26 @@
+On Data Representation
+
+8-bit values:
+Binary: 	00000000 - 11111111
+Hexadecimal:	00 - ff
+Decimal: 	0 - 255
+
+16-bit values:
+Binary: 	00000000 00000000 - 11111111 11111111
+Hexadecimal:	0000 - ffff
+Decimal:	0 - 65535
+
+
+
+Assembly Notation:
+Binary:		%01111111
+Hexadecimal:	$7f
+Decimal: 	127
+
+Javascript Syntax:
+Binary:		0b01111111
+Hexadecimal:	0x7f
+Decimal: 	127
+
+next: Memory
+back: Internals

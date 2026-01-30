@@ -1,0 +1,76 @@
+CPU Encapsulation (Overview)
+
+Up until this point, we have been working on this in a way that is meant to prioritize 'sandboxing'; keeping everything out in the open as to make it easier to test, debug, look at, and interact with. Even though everything is working so far so well, its all just kind of hanging out around in the global namespace. This is widely regarded as 'bad practice'. I dont agree with that statement itself, but I do agree with the point its trying to make. What we do next is going to transform this from isolated, working code into more of a polished tool that unifies all of this behavior. It can then be introduced into other contexts and even be used by someone that doesnt know (or remember, like you or me in the future) how it works, by simply directing it from a higher level of abstraction.
+
+We already started this by separating the memory from the cpu. We left these dummy functions in its place, readRAM and writeRAM. These are going to be methods attached to the cpu as an object, and when a cpu is created, those methods can be set like this:
+
+memory = new Uint8Array(0x10000); // external memory to serve as RAM
+
+cpu.readRAM = function(address) {
+  return memory[address];
+}
+
+cpu.writeRAM = function(address,value) {
+  memory[address] = value;
+}
+
+Then, every time the cpu reads or writes memory it will do so through those methods. It might seem redundant to do this, since we were doing the same thing just fine before, but this makes doing things like memory mapping much easier. If we want to designate a section of memory, such as $0200 - $05ff, to a 32x32 pixel display, having each address hold a color value for a pixel, we can set that up without having to go through the entire code and making sure each time we write to RAM that these considiton are taken account of, like this:
+
+memory = new Uint8Array(0x10000); // external memory to serve as RAM
+
+displayMemory = new Uint8Array(0x400); // separate memory to hold the diplay data
+
+cpu.readRAM = function(address) {
+  return memory[address];
+}
+
+cpu.writeRAM = function(address,value) {
+  memory[address] = value;
+  if (address < 0x0200 || 0x0600 <= address) return;
+  displayMemory[address - 0x0200] = value;
+}
+
+This generalization can be used for all kinds of input, output, memory banking (for example being able to fully access a 1.6mb RAMs memory despite only having enough address lines to specify a 65kb address).
+
+Here is the rest of what these cpu objects are going to have:
+
+cpu.readRAM(address)
+cpu.writeRAM(address,value)
+
+cpu.A:
+  get: return the internal A register value
+  set: set the internal A register to a value
+// likewise for the other registers
+
+cpu.N:
+  get: return the value of the negative flag
+  set: set the negative flag to a value
+// likewise for the other flags
+
+cpu.pushStack = directly push values onto stack
+cpu.pullStack = directly pull values from stack
+cpu.peekStack = read what value is that the top of the stack
+
+cpu.step = the internal step function
+cpu.run = the internal run function
+cpu.stop = the internal stop function
+cpu.sendReset = the internal sendReset function
+cpu.sendIRQ = the internal sendIRQ function
+cpu.sendNMI = the internal sendNMI function
+
+cpu.ips:
+  get: return the value of internal variable ips
+  set: set the internal isp variable to a value
+
+cpu.running:
+  get: return the value of the internal variable running
+// read only
+
+
+
+This gives all of the important pieces to interact with and use the cpu, as well as some quality of life inclusions such as the register/flag pseudo-properties.
+
+
+
+next(code): CPU Encapsulation (Implementation)
+back: Factoring Out RAM

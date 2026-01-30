@@ -1,0 +1,76 @@
+Memory Access (Overview)
+
+The single most important thing that needs to happen is retrieving data from memory. This is not only where the data that the program interacts with is stored, but also where the program itself is stored.
+
+The reset vector (the 2-byte value stored at memory locations $fffc and $fffd) determines where in memory the program data begins. A typical location used is $8000, in which case you would see these values:
+
+RAM[$fffc] = $00   ; low byte first
+RAM[$fffd] = $80   ; then high byte
+
+Whenever a reset signal is sent to the cpu, it will start by retrieving these values, and using them to set the low and high bytes of the program counter. Once that is done, the cpu starts retrieving bytes from that point onward. A typical program looks like this:
+
+Assembly code:
+
+ldx #$0       ; set X to 0
+lda #$ff      ; set A to $ff (255)
+loop:         ; put a label to branch to
+sta $0200,x   ; store A at memory locaton $0200 + X
+inx           ; increment X
+bne loop      ; brach if not equal to 0
+
+Instructions are stored in order, taking up 1 to 3 bytes each, starting with that instructions op-code, followed by the argument if any;
+
+ldx #$0       ; $a2 (op-code) $00 (arg low)
+lda #$ff      ; $a9 (op-code) $ff (arg low)
+loop:         ;
+sta $0200,x   ; $9d (op-code) $00 (arg low) $02 (arg high)
+inx           ; $e8 (op-code)
+bne loop      ; $d0 (op-code) $fa (arg low)
+
+The assembler would produce that byte code in that exact order:
+
+RAM[$8000] = $a2
+RAM[$8001] = $00
+RAM[$8002] = $a9
+RAM[$8003] = $ff
+RAM[$8004] = $9d
+RAM[$8005] = $00
+RAM[$8006] = $02
+RAM[$8007] = $e8
+RAM[$8008] = $d0
+RAM[$8009] = $fa
+
+
+
+So if the program counter was set to $8000 after a reset, the cpu starts to read bytes, incrementing the program counter as it goes,
+
+next byte: $a2, instruction
+next byte: $00, argument
+
+  this tells the cpu, load X with $00
+
+next byte: $a9, instruction
+next byte: $ff, argument
+
+  this tells the cpu, load A with $ff
+
+next byte: $9d, instruction
+next byte: $00, argument (low byte)
+next byte: $02, argument (high byte)
+
+  this tells the cpu, store A at the memory location $0200 + X
+
+next byte: $ea, instruction
+
+  this tells the cpu, increment X
+
+next byte: $d0, instruction
+next byte: $fa, argument (low byte)
+
+  this tells the cpu, offset PC by the signed value of $fa (which is -6)
+  essentially, subtract 6 from PC
+
+
+
+next(code): Memory Access (Implementation)
+back: Initializing Registers and Memory

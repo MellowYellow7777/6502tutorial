@@ -1,0 +1,22 @@
+Internals
+
+On the chips inside, there are a handful of registers used to hold and manipulate data.
+
+A (8-bits) - Accumulator
+X (8-bits) - 'X' Index Register
+Y (8-bits) - 'Y' Index Register
+SP (8-bits) - Stack Pointer Register
+PS (8-bits) - Processor Status Register (sometimes just called "P")
+PC (16-bits) - Program Counter Register
+
+These 6 registers are all we are going worry about, as they are the only registers directly involved with the actual program being run. All other registers/components are used internally by the cpu. These include:
+
+IR (8-bits) - Instruction Register
+MAR (16-bits) - Memory Address Register
+ALU (8-bits) - Arithmetic Logic Unit
+ID - Instruction Decode
+
+As well as several temporary registers and timing components. The reason we dont have to worry about these is because in hardware, when values need to be 'remembered', this is acomplished by latching that value somewhere as a physical state, which can later be retrieved. We dont have to do that. Our 'instruction register' is just an expression in a switch statement. Our 'ALU' will exist as explicitly defined behavior withing specific instructions. Timing also largly takes care of itself. All we really have to do is execute instructions in order, we dont need to worry about synchronizing a bunch of internal physical components.
+
+next: On Data Representation
+back: What is important to us

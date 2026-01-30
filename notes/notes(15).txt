@@ -1,0 +1,584 @@
+Full Program (up to this point)
+
+
+
+// register and memory initialization
+
+var A = 0;
+var X = 0;
+var Y = 0;
+var SP = 0;
+var PS = 0;
+var PC = 0;
+var RAM = new Uint8Array(0x10000).fill(0);
+
+
+
+// memory accessors
+
+function nextByte() {
+  var value = RAM[PC];
+  PC = PC + 1 & 0xffff;
+  return value;
+}
+
+function next2Bytes() {
+  var value = RAM[PC] | RAM[PC+1 & 0xffff] << 8;
+  PC = PC + 2 & 0xffff;
+  return value;
+}
+
+function read2Bytes(address) {
+  return RAM[address]
+       | RAM[address+1 & 0xffff] << 8;
+}
+
+function read2BytesZpg(address) {
+  return RAM[address & 0xff]
+       | RAM[address+1 & 0xff] << 8;
+}
+
+
+
+// addressing modes (reading value)
+
+var readRAMimm = nextByte;
+
+function readRAMzpg() {
+  return RAM[nextByte()];
+}
+
+function readRAMzpx() {
+  return RAM[nextByte() + X & 0xff];
+}
+
+function readRAMzpy() {
+  return RAM[nextByte() + Y & 0xff];
+}
+
+function readRAMabs() {
+  return RAM[next2Bytes()];
+}
+
+function readRAMabx() {
+  return RAM[next2Bytes() + X & 0xffff];
+}
+
+function readRAMaby() {
+  return RAM[next2Bytes() + Y & 0xffff];
+}
+
+function readRAMinx() {
+  return RAM[read2BytesZpg(nextByte() + X)];
+}
+
+function readRAMiny() {
+  return RAM[read2BytesZpg(nextByte()) + Y & 0xffff];
+}
+
+function readRAMrel() {
+  return (nextByte() << 24) >> 24;
+}
+
+// addressing modes (getting index)
+
+var getIDXzpg = nextByte;
+
+function getIDXzpx() {
+  return nextByte() + X & 0xff;
+}
+
+function getIDXzpy() {
+  return nextByte() + Y & 0xff;
+}
+
+var getIDXabs = next2Bytes;
+
+function getIDXabx() {
+  return next2Bytes() + X & 0xffff;
+}
+
+function getIDXaby() {
+  return next2Bytes() + Y & 0xffff;
+}
+
+function getIDXinx() {
+  return read2BytesZpg(nextByte() + X);
+}
+
+function getIDXiny() {
+  return read2BytesZpg(nextByte()) + Y & 0xffff;
+}
+
+function getIDXind() {
+  var p = next2Bytes();
+  return RAM[p] | RAM[(p & 0xff00) | ((p + 1) & 0xff)] << 8;
+}
+
+
+
+// stack
+
+function pushStack(value) {
+  RAM[0x100 | SP] = value;
+  SP = SP - 1 & 0xff;
+}
+
+function pullStack() {
+  SP = SP + 1 & 0xff;
+  return RAM[0x100 | SP];
+}
+
+
+
+// flags
+
+var FLAG_N = 0b10000000; // negative
+var FLAG_V = 0b01000000; // overflow
+var FLAG_U = 0b00100000; // unused
+var FLAG_B = 0b00010000; // break
+var FLAG_D = 0b00001000; // decimal mode
+var FLAG_I = 0b00000100; // interrupt disable
+var FLAG_Z = 0b00000010; // zero
+var FLAG_C = 0b00000001; // carry
+
+function setFlag(flag, value) {
+  PS = (PS & ~flag) | (-value & flag);
+}
+
+function setNZflags(value) {
+  PS = PS & ~(FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | FLAG_Z & value - 1 >> 7;
+}
+
+function setNZCflags(value, carry) {
+  PS = PS & ~(FLAG_N | FLAG_Z | FLAG_C)
+       | FLAG_N & value
+       | FLAG_Z & value - 1 >> 7
+       | carry;
+}
+
+function setCMPflags(value) {
+  PS = PS & ~(FLAG_C | FLAG_N | FLAG_Z)
+       | FLAG_N & value
+       | FLAG_Z & (value & 0xff) - 1 >> 7
+       | FLAG_C & ~value >> 8;
+}
+
+
+
+// instructions
+
+function LDA(v) { setNZflags(A = v); }
+function LDX(v) { setNZflags(X = v); }
+function LDY(v) { setNZflags(Y = v); }
+
+function STA(p) { RAM[p] = A; }
+function STX(p) { RAM[p] = X; }
+function STY(p) { RAM[p] = Y; }
+
+function TAX() { setNZflags(X = A); }
+function TAY() { setNZflags(Y = A); }
+function TXA() { setNZflags(A = X); }
+function TYA() { setNZflags(A = Y); }
+function TSX() { setNZflags(X = SP);}
+function TXS() { SP = X; }
+
+function PHA() { pushStack(A); }
+function PLA() { setNZflags(A = pullStack()); }
+function PHP() { pushStack(PS | FLAG_B | FLAG_U); }
+function PLP() { PS = pullStack(); }
+
+function INX() { setNZflags(X = X + 1 & 0xff); }
+function INY() { setNZflags(Y = Y + 1 & 0xff); }
+function DEX() { setNZflags(X = X - 1 & 0xff); }
+function DEY() { setNZflags(Y = Y - 1 & 0xff); }
+function INC(p) { setNZflags(RAM[p] = RAM[p] + 1 & 0xff); }
+function DEC(p) { setNZflags(RAM[p] = RAM[p] - 1 & 0xff); }
+
+function ADC(v) {
+  var c = PS & FLAG_C, r;
+  if (PS & FLAG_D) {
+    r = (A & 0x0f) + (v & 0x0f) + c;
+    if (r > 0x09) { 
+      r = 0x10 | ((r + 6) & 0x0f);
+    }
+    r += (A & 0xf0) + (v & 0xf0);
+    c = r >> 8 | (r >> 7 & (r >> 6 | r >> 5)) & FLAG_C;
+    r += 0x60 * c;
+  } else {
+    r = A + v + c;
+    c = r >> 8 & FLAG_C;
+  }
+  PS = PS & ~(FLAG_C | FLAG_V | FLAG_N | FLAG_Z)
+       | FLAG_N & r
+       | (~(A ^ v) & (A ^ r) & FLAG_N) >> 1
+       | FLAG_Z & (r & 0xff) - 1 >> 7
+       | c;
+  A = r & 0xff;
+}
+
+function SBC(v) { ADC(PS & FLAG_D ? 0x99 - v : ~v & 0xff); }
+
+function CMP(v) { setCMPflags(A - v); }
+function CPX(v) { setCMPflags(X - v); }
+function CPY(v) { setCMPflags(Y - v); }
+
+function AND(v) { setNZflags(A &= v); }
+function ORA(v) { setNZflags(A |= v); }
+function EOR(v) { setNZflags(A ^= v); }
+
+function BIT(v) {
+  PS = PS & ~(FLAG_N | FLAG_V | FLAG_Z)
+       | FLAG_N & v
+       | FLAG_V & v
+       | FLAG_Z & (A & v) - 1 >> 7;
+}
+
+function LSR_A() {
+  var c = A & FLAG_C;
+  A >>>= 1;
+  setNZCflags(A,c);
+}
+
+function ASL_A() {
+  var c = A >> 7;
+  A = A << 1 & 0xff;
+  setNZCflags(A,c);
+}
+
+function ROR_A() {
+  var c = A & FLAG_C;
+  A = A >>> 1 | (PS & FLAG_C) << 7;
+  setNZCflags(A,c);
+}
+
+function ROL_A() {
+  var c = A >> 7;
+  A = (A << 1 | PS & FLAG_C) & 0xff;
+  setNZCflags(A,c);
+}
+
+function LSR_M(p) {
+  var v = RAM[p];
+  var c = v & FLAG_C;
+  RAM[p] = v >>>= 1;
+  setNZCflags(v,c);
+}
+
+function ASL_M(p) {
+  var v = RAM[p];
+  var c = v >> 7;
+  RAM[p] = v = v << 1 & 0xff;
+  setNZCflags(v,c);
+}
+
+function ROR_M(p) {
+  var v = RAM[p];
+  var c = v & FLAG_C;
+  RAM[p] = v = v >>> 1 | (PS & FLAG_C) << 7;
+  setNZCflags(v,c);
+}
+
+function ROL_M(p) {
+  var v = RAM[p];
+  var c = v >> 7;
+  RAM[p] = v = (v << 1 | PS & FLAG_C) & 0xff;
+  setNZCflags(v,c);
+}
+
+function SEC() { PS |= FLAG_C; }
+function SEI() { PS |= FLAG_I; }
+function SED() { PS |= FLAG_D; }
+function CLC() { PS &= ~FLAG_C; }
+function CLI() { PS &= ~FLAG_I; }
+function CLD() { PS &= ~FLAG_D; }
+function CLV() { PS &= ~FLAG_V; }
+
+function BCS(v) { if (PS & FLAG_C) PC = PC + v & 0xffff; }
+function BEQ(v) { if (PS & FLAG_Z) PC = PC + v & 0xffff; }
+function BVS(v) { if (PS & FLAG_V) PC = PC + v & 0xffff; }
+function BMI(v) { if (PS & FLAG_N) PC = PC + v & 0xffff; }
+function BCC(v) { if (~PS & FLAG_C) PC = PC + v & 0xffff; }
+function BNE(v) { if (~PS & FLAG_Z) PC = PC + v & 0xffff; }
+function BVC(v) { if (~PS & FLAG_V) PC = PC + v & 0xffff; }
+function BPL(v) { if (~PS & FLAG_N) PC = PC + v & 0xffff; }
+
+function JMP(p) { PC = p; }
+
+function JSR(p) {
+  PC--;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  PC = p;
+}
+
+function RTS() {
+  PC = ((pullStack() | pullStack() << 8) + 1) & 0xffff;
+}
+
+function BRK() {
+  PC++;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffe);
+}
+
+function RTI() {
+  PS = pullStack();
+  PC = pullStack() | pullStack() << 8;
+}
+
+function NOP() {}
+
+
+
+// step
+
+function step() {
+  var opcode = nextByte();
+  switch (opcode) {
+    case 0x00: BRK(); break;              // BRK imp
+    case 0x01: ORA(readRAMinx()); break;  // ORA inx
+    case 0x05: ORA(readRAMzpg()); break;  // ORA zpg
+    case 0x06: ASL_M(getIDXzpg()); break; // ASL zpg
+    case 0x08: PHP(); break;              // PHP imp
+    case 0x09: ORA(readRAMimm()); break;  // ORA imm
+    case 0x0A: ASL_A(); break;            // ASL acc
+    case 0x0D: ORA(readRAMabs()); break;  // ORA abs
+    case 0x0E: ASL_M(getIDXabs()); break; // ASL abs
+    case 0x10: BPL(readRAMrel()); break;  // BPL rel
+    case 0x11: ORA(readRAMiny()); break;  // ORA iny
+    case 0x15: ORA(readRAMzpx()); break;  // ORA zpx
+    case 0x16: ASL_M(getIDXzpx()); break; // ASL zpx
+    case 0x18: CLC(); break;              // CLC imp
+    case 0x19: ORA(readRAMaby()); break;  // ORA aby
+    case 0x1D: ORA(readRAMabx()); break;  // ORA abx
+    case 0x1E: ASL_M(getIDXabx()); break; // ASL abx
+    case 0x20: JSR(getIDXabs()); break;   // JSR abs
+    case 0x21: AND(readRAMinx()); break;  // AND inx
+    case 0x24: BIT(readRAMzpg()); break;  // BIT zpg
+    case 0x25: AND(readRAMzpg()); break;  // AND zpg
+    case 0x26: ROL_M(getIDXzpg()); break; // ROL zpg
+    case 0x28: PLP(); break;              // PLP imp
+    case 0x29: AND(readRAMimm()); break;  // AND imm
+    case 0x2A: ROL_A(); break;            // ROL acc
+    case 0x2C: BIT(readRAMabs()); break;  // BIT abs
+    case 0x2D: AND(readRAMabs()); break;  // AND abs
+    case 0x2E: ROL_M(getIDXabs()); break; // ROL abs
+    case 0x30: BMI(readRAMrel()); break;  // BMI rel
+    case 0x31: AND(readRAMiny()); break;  // AND iny
+    case 0x35: AND(readRAMzpx()); break;  // AND zpx
+    case 0x36: ROL_M(getIDXzpx()); break; // ROL zpx
+    case 0x38: SEC(); break;              // SEC imp
+    case 0x39: AND(readRAMaby()); break;  // AND aby
+    case 0x3D: AND(readRAMabx()); break;  // AND abx
+    case 0x3E: ROL_M(getIDXabx()); break; // ROL abx
+    case 0x40: RTI(); break;              // RTI imp
+    case 0x41: EOR(readRAMinx()); break;  // EOR inx
+    case 0x45: EOR(readRAMzpg()); break;  // EOR zpg
+    case 0x46: LSR_M(getIDXzpg()); break; // LSR zpg
+    case 0x48: PHA(); break;              // PHA imp
+    case 0x49: EOR(readRAMimm()); break;  // EOR imm
+    case 0x4A: LSR_A(); break;            // LSR acc
+    case 0x4C: JMP(getIDXabs()); break;   // JMP abs
+    case 0x4D: EOR(readRAMabs()); break;  // EOR abs
+    case 0x4E: LSR_M(getIDXabs()); break; // LSR abs
+    case 0x50: BVC(readRAMrel()); break;  // BVC rel
+    case 0x51: EOR(readRAMiny()); break;  // EOR iny
+    case 0x55: EOR(readRAMzpx()); break;  // EOR zpx
+    case 0x56: LSR_M(getIDXzpx()); break; // LSR zpx
+    case 0x58: CLI(); break;              // CLI imp
+    case 0x59: EOR(readRAMaby()); break;  // EOR aby
+    case 0x5D: EOR(readRAMabx()); break;  // EOR abx
+    case 0x5E: LSR_M(getIDXabx()); break; // LSR abx
+    case 0x60: RTS(); break;              // RTS imp
+    case 0x61: ADC(readRAMinx()); break;  // ADC inx
+    case 0x65: ADC(readRAMzpg()); break;  // ADC zpg
+    case 0x66: ROR_M(getIDXzpg()); break; // ROR zpg
+    case 0x68: PLA(); break;              // PLA imp
+    case 0x69: ADC(readRAMimm()); break;  // ADC imm
+    case 0x6A: ROR_A(); break;            // ROR acc
+    case 0x6C: JMP(getIDXind()); break;   // JMP ind
+    case 0x6D: ADC(readRAMabs()); break;  // ADC abs
+    case 0x6E: ROR_M(getIDXabs()); break; // ROR abs
+    case 0x70: BVS(readRAMrel()); break;  // BVS rel
+    case 0x71: ADC(readRAMiny()); break;  // ADC iny
+    case 0x75: ADC(readRAMzpx()); break;  // ADC zpx
+    case 0x76: ROR_M(getIDXzpx()); break; // ROR zpx
+    case 0x78: SEI(); break;              // SEI imp
+    case 0x79: ADC(readRAMaby()); break;  // ADC aby
+    case 0x7D: ADC(readRAMabx()); break;  // ADC abx
+    case 0x7E: ROR_M(getIDXabx()); break; // ROR abx
+    case 0x81: STA(getIDXinx()); break;   // STA inx
+    case 0x84: STY(getIDXzpg()); break;   // STY zpg
+    case 0x85: STA(getIDXzpg()); break;   // STA zpg
+    case 0x86: STX(getIDXzpg()); break;   // STX zpg
+    case 0x88: DEY(); break;              // DEY imp
+    case 0x8A: TXA(); break;              // TXA imp
+    case 0x8C: STY(getIDXabs()); break;   // STY abs
+    case 0x8D: STA(getIDXabs()); break;   // STA abs
+    case 0x8E: STX(getIDXabs()); break;   // STX abs
+    case 0x90: BCC(readRAMrel()); break;  // BCC rel
+    case 0x91: STA(getIDXiny()); break;   // STA iny
+    case 0x94: STY(getIDXzpx()); break;   // STY zpx
+    case 0x95: STA(getIDXzpx()); break;   // STA zpx
+    case 0x96: STX(getIDXzpy()); break;   // STX zpy
+    case 0x98: TYA(); break;              // TYA imp
+    case 0x99: STA(getIDXaby()); break;   // STA aby
+    case 0x9A: TXS(); break;              // TXS imp
+    case 0x9D: STA(getIDXabx()); break;   // STA abx
+    case 0xA0: LDY(readRAMimm()); break;  // LDY imm
+    case 0xA1: LDA(readRAMinx()); break;  // LDA inx
+    case 0xA2: LDX(readRAMimm()); break;  // LDX imm
+    case 0xA4: LDY(readRAMzpg()); break;  // LDY zpg
+    case 0xA5: LDA(readRAMzpg()); break;  // LDA zpg
+    case 0xA6: LDX(readRAMzpg()); break;  // LDX zpg
+    case 0xA8: TAY(); break;              // TAY imp
+    case 0xA9: LDA(readRAMimm()); break;  // LDA imm
+    case 0xAA: TAX(); break;              // TAX imp
+    case 0xAC: LDY(readRAMabs()); break;  // LDY abs
+    case 0xAD: LDA(readRAMabs()); break;  // LDA abs
+    case 0xAE: LDX(readRAMabs()); break;  // LDX abs
+    case 0xB0: BCS(readRAMrel()); break;  // BCS rel
+    case 0xB1: LDA(readRAMiny()); break;  // LDA iny
+    case 0xB4: LDY(readRAMzpx()); break;  // LDY zpx
+    case 0xB5: LDA(readRAMzpx()); break;  // LDA zpx
+    case 0xB6: LDX(readRAMzpy()); break;  // LDX zpy
+    case 0xB8: CLV(); break;              // CLV imp
+    case 0xB9: LDA(readRAMaby()); break;  // LDA aby
+    case 0xBA: TSX(); break;              // TSX imp
+    case 0xBC: LDY(readRAMabx()); break;  // LDY abx
+    case 0xBD: LDA(readRAMabx()); break;  // LDA abx
+    case 0xBE: LDX(readRAMaby()); break;  // LDX aby
+    case 0xC0: CPY(readRAMimm()); break;  // CPY imm
+    case 0xC1: CMP(readRAMinx()); break;  // CMP inx
+    case 0xC4: CPY(readRAMzpg()); break;  // CPY zpg
+    case 0xC5: CMP(readRAMzpg()); break;  // CMP zpg
+    case 0xC6: DEC(getIDXzpg()); break;   // DEC zpg
+    case 0xC8: INY(); break;              // INY imp
+    case 0xC9: CMP(readRAMimm()); break;  // CMP imm
+    case 0xCA: DEX(); break;              // DEX imp
+    case 0xCC: CPY(readRAMabs()); break;  // CPY abs
+    case 0xCD: CMP(readRAMabs()); break;  // CMP abs
+    case 0xCE: DEC(getIDXabs()); break;   // DEC abs
+    case 0xD0: BNE(readRAMrel()); break;  // BNE rel
+    case 0xD1: CMP(readRAMiny()); break;  // CMP iny
+    case 0xD5: CMP(readRAMzpx()); break;  // CMP zpx
+    case 0xD6: DEC(getIDXzpx()); break;   // DEC zpx
+    case 0xD8: CLD(); break;              // CLD imp
+    case 0xD9: CMP(readRAMaby()); break;  // CMP aby
+    case 0xDD: CMP(readRAMabx()); break;  // CMP abx
+    case 0xDE: DEC(getIDXabx()); break;   // DEC abx
+    case 0xE0: CPX(readRAMimm()); break;  // CPX imm
+    case 0xE1: SBC(readRAMinx()); break;  // SBC inx
+    case 0xE4: CPX(readRAMzpg()); break;  // CPX zpg
+    case 0xE5: SBC(readRAMzpg()); break;  // SBC zpg
+    case 0xE6: INC(getIDXzpg()); break;   // INC zpg
+    case 0xE8: INX(); break;              // INX imp
+    case 0xE9: SBC(readRAMimm()); break;  // SBC imm
+    case 0xEA: NOP(); break;              // NOP imp
+    case 0xEC: CPX(readRAMabs()); break;  // CPX abs
+    case 0xED: SBC(readRAMabs()); break;  // SBC abs
+    case 0xEE: INC(getIDXabs()); break;   // INC abs
+    case 0xF0: BEQ(readRAMrel()); break;  // BEQ rel
+    case 0xF1: SBC(readRAMiny()); break;  // SBC iny
+    case 0xF5: SBC(readRAMzpx()); break;  // SBC zpx
+    case 0xF6: INC(getIDXzpx()); break;   // INC zpx
+    case 0xF8: SED(); break;              // SED imp
+    case 0xF9: SBC(readRAMaby()); break;  // SBC aby
+    case 0xFD: SBC(readRAMabx()); break;  // SBC abx
+    case 0xFE: INC(getIDXabx()); break;   // INC abx
+    default: NOP(); break;                // default to nop
+  }
+}
+
+
+
+// interrupts
+
+function RES() {
+  PS = PS & ~FLAG_D | FLAG_I;
+  SP = 0xfd;
+  PC = read2Bytes(0xfffc);
+}
+
+function IRQ() {
+  if (PS & FLAG_I) return;
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffe);
+}
+
+function NMI() {
+  pushStack(PC >>> 8);
+  pushStack(PC);
+  pushStack(PS | FLAG_U | FLAG_B);
+  PS |= FLAG_I;
+  PC = read2Bytes(0xfffa);
+}
+
+function sendReset() {
+  var _step = step;
+  step = function() {
+    RES();
+    step = _step;
+  }
+}
+
+function sendIRQ() {
+  var _step = step;
+  step = function() {
+    IRQ();
+    step = _step;
+  }
+}
+
+function sendNMI() {
+  var _step = step;
+  step = function() {
+    NMI();
+    step = _step;
+  }
+}
+
+
+
+// execution
+
+var running = false;
+var ips = 100;
+var lastTime = 0;
+var instAcc = 0;
+
+function run() {
+  lastTime = performance.now()/1000;
+  running = true;
+  loop();
+}
+
+function stop() {
+  running = false;
+}
+
+function loop() {
+  if (!running) return;
+  var time = performance.now()/1000;
+  var delta = time - lastTime;
+  lastTime = time;
+  instAcc += delta * ips;
+  var i = instAcc | 0;
+  instAcc -= i;
+  while (i--) step();
+  setTimeout(loop,0);
+}
+
+
+
+next(code): Running Functional Test
+back: Execution

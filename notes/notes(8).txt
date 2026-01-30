@@ -1,0 +1,198 @@
+Addressing Modes (Implementation)
+
+
+
+// imm
+
+// verbose
+function readRAMimm() {
+  return nextByte();
+}
+
+// simplified
+var readRAMimm = nextByte;
+
+
+
+// zpg zpx zpy
+
+function readRAMzpg() {
+  return RAM[nextByte()];
+}
+
+function readRAMzpx() {
+  return RAM[nextByte() + X & 0xff];
+}
+
+function readRAMzpy() {
+  return RAM[nextByte() + Y & 0xff];
+}
+
+
+
+// abs abx aby
+
+function readRAMabs() {
+  return RAM[next2Bytes()];
+}
+
+function readRAMabx() {
+  return RAM[next2Bytes() + X & 0xffff];
+}
+
+function readRAMaby() {
+  return RAM[next2Bytes() + Y & 0xffff];
+}
+
+
+
+// no read for ind mode
+
+
+
+// inx alg
+
+// zp = next byte
+// lo = mem[zp + x]
+// hi = mem[zp + x + 1]
+// pt = lo | hi << 8
+// return mem[pt]
+
+// inx
+
+function readRAMinx() {
+  var zp = nextByte();
+  var pt = read2BytesZpg(zp + X);
+  return RAM[pt];
+}
+
+
+
+// iny alg
+
+// zp = next byte
+// lo = mem[zp]
+// hi = mem[zp + 1]
+// pt = lo | hi << 8
+// pt = pt + y
+// return mem[pt]
+
+// iny
+
+function readRAMiny() {
+  var zp = nextByte();
+  var pt = read2BytesZpg(zp) + Y;
+  return RAM[pt & 0xffff];
+}
+
+
+
+// inx iny simplified
+
+function readRAMinx() {
+  return RAM[read2BytesZpg(nextByte() + X)];
+}
+
+function readRAMiny() {
+  return RAM[read2BytesZpg(nextByte()) + Y & 0xffff];
+}
+
+
+
+// rel
+
+// verbose
+function readRAMrel() {
+  var n = nextByte();
+  if (n > 127) {
+    return n - 256;
+  } else {
+    return n;
+  }
+}
+
+// simplified
+function readRAMrel() {
+  var n = nextByte();
+  return n > 127 ? n - 256 : n;
+}
+
+// bitwise versions
+function readRAMrel() {
+  return (nextByte() ^ 0x80) - 0x80;
+}
+
+function readRAMrel() {
+  return (nextByte() << 24) >> 24;
+}
+
+
+
+// copy paste for index versions
+// remove RAM[...] wrapper
+
+function getIDXzpg() {
+  return nextByte();
+}
+
+function getIDXzpx() {
+  return nextByte() + X & 0xff;
+}
+
+function getIDXzpy() {
+  return nextByte() + Y & 0xff;
+}
+
+function getIDXabs() {
+  return next2Bytes();
+}
+
+function getIDXabx() {
+  return next2Bytes() + X & 0xffff;
+}
+
+function getIDXaby() {
+  return next2Bytes() + Y & 0xffff;
+}
+
+function getIDXinx() {
+  return read2BytesZpg(nextByte() + X);
+}
+
+function getIDXiny() {
+  return read2BytesZpg(nextByte()) + Y & 0xffff;
+}
+
+
+
+// simplified
+var getIDXzpg = nextByte;
+
+var getIDXabs = next2Bytes;
+
+
+
+// ind (intention)
+
+function getIDXind() {
+  return read2Bytes(next2Bytes());
+}
+
+
+
+// ind (bug)
+
+// happens when the low byte is $ff
+// if you do JMP ($50ff), supposed to get address from $50ff and $5100
+// fails to increment the high byte, gets address from $50ff and $5000
+// low byte wraps around but high byte doesnt get the carry
+
+function getIDXind() {
+  var p = next2Bytes();
+  return RAM[p] | RAM[(p & 0xff00) | ((p + 1) & 0xff)] << 8;
+}
+
+
+
+next(code): Flags and the Stack
+back: Addressing Modes (Overview)
