@@ -116,7 +116,7 @@ The program counter is actually two 8 bit registers in hardware, that together e
 
 #### Flags
 
-Flags are stored in the [Processor Status](#processor_status) register. Several of these flags have dedicated set/clear instructions. There are also several branch instructions that conditionally jump the program depending on the state of a flag. Both of the ```PLP``` (pull processor status from stack) and ```RTI``` (return from interrupt) affect all flags as they overwrite the entire contents of the processor status.
+Flags are stored in the [Processor Status](#processor-status) register. Several of these flags have dedicated set/clear instructions. There are also several branch instructions that conditionally jump the program depending on the state of a flag. Both of the ```PLP``` (pull processor status from stack) and ```RTI``` (return from interrupt) affect all flags as they overwrite the entire contents of the processor status.
 
 Table:
 
