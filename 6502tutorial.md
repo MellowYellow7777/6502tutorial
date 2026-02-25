@@ -1,5 +1,7 @@
 WIP
 
+todo: links, add missing / remove redundant
+
 # How to write a 6502 emulator
 
 This is a project I keep coming back to.. Im no good at introductions so Im going to get right into it. The goal here is to implement a 6502 emulator. This is a really fun project and there are quite a few things you could learn if you havent done this sort of thing before. Now I have done this, multiple times over, maybe I didnt like something about the last time, or maybe I think I can do something better this time, but Ive gotten to the point where I can comforatably make something that at the very least, works well, so thats what Im going to show you how to do.
@@ -73,12 +75,12 @@ On the chips inside, there are a handful of registers used to hold and manipulat
 
 | Register | Bits | Description |
 |----------|------|-------------|
-| A        | 8    | Accumulator |
-| X        | 8    | 'X' Index Register |
-| Y        | 8    | 'Y' Index Register |
-| SP       | 8    | Stack Pointer |
-| PS / P   | 8    | Processor Status |
-| PC       | 16   | Program Counter |
+| [A](#accumulator)        | 8    | Accumulator |
+| [X](#index-registers)        | 8    | 'X' Index Register |
+| [Y](#index-registers)        | 8    | 'Y' Index Register |
+| [SP](#stack-pointer)       | 8    | Stack Pointer |
+| [PS](#processor-status) / P   | 8    | Processor Status |
+| [SP](#program-counter)       | 16   | Program Counter |
 
 These are the main registers we will have to represent to write a working emulator. There are other registers; IR (8-bit instruction register), MAR (16-bit memory address register); components; ALU (arithmetic logic unit), ID (instruction decode); that we wont have to worry about as their puposes and behaviors will be fulfilled and arise naturally throughout writing the emulator. For example, the ALU contains circuitry to add together two binary numbers, we can just use the add ```+``` operation .
 
@@ -104,7 +106,7 @@ This program will write 0xFF to every memory address from 0x40 up to but not inc
 
 ##### Stack Pointer
 
-The stack pointer is used as a memory offset from the location 0x0100. Since the stack pointer is 8 bits, it can hold any value from 0x00 to 0xFF, making its effective range at memory addresses 0x0100 to 0x01FF. In this range, data can be pushed and pulled via stack instructions, and the stack pointer is automatically updated accordingly.
+The stack pointer is used as a memory offset from the location 0x0100. Since the stack pointer is 8 bits, it can hold any value from 0x00 to 0xFF, making its effective range at memory addresses 0x0100 to 0x01FF. In this range, data can be pushed and pulled via [stack](#stack-0100-01ff) instructions, and the stack pointer is automatically updated accordingly.
 
 ##### Processor Status
 
@@ -142,7 +144,7 @@ The carry flag is affected by the following instructions:
 - ```CMP```, ```CPX```, ```CPY``` (compare A/X/Y)
 - ```ASL```, ```LSR``` (arithmetic left/logical right shift)
 - ```ROL```, ```ROR``` (rotate left/right through carry)
-- ```PLP``` (pull PS from stack)
+- ```PLP``` (pull [PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The following instructions are affected by the carry flag:
@@ -165,7 +167,7 @@ The zero flag is affected by the following instructions:
 - ```BIT``` (bit test)
 - ```ASL```, ```LSR``` (arithmetic left/logical right shift)
 - ```ROL```, ```ROR``` (rotate left/right through carry)
-- ```PLA```, ```PLP``` (pull A/PS from stack)
+- ```PLA```, ```PLP``` (pull A/[PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The following instructions are affected by the zero flag:
@@ -177,7 +179,7 @@ The following instructions are affected by the zero flag:
 The interrupt disable flag is affected by the following instructions:
 
 - ```CLI```, ```SEI``` (clear/set interrupt disable)
-- ```PLP``` (pull PS from stack)
+- ```PLP``` (pull [PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The interrupt disable flag affects only the ```IRQ``` (maskable interrupt request) routine, disabling it if set.
@@ -187,7 +189,7 @@ The interrupt disable flag affects only the ```IRQ``` (maskable interrupt reques
 The decimal mode flag is affected by the following instructions:
 
 - ```SED```, ```CLD``` (clear/set decimal mode)
-- ```PLP``` (pull PS from stack)
+- ```PLP``` (pull [PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The following instructions are affected by the decimal mode flag:
@@ -196,11 +198,11 @@ The following instructions are affected by the decimal mode flag:
 
 ##### Break Flag
 
-The break flag has no affect on any instruction. It may be affected by ```PLP```/```RTI```, but there is no intruction that can actually read the break flag. ```PHP``` (push PS to stack) and ```BRK``` (break) actually share much of the same circuitry on the chip, and both of these instructions push the PS to stack, but the value pushed will always have the break flag bit set, regardless of whether its set in the PS or not.
+The break flag has no affect on any instruction. It may be affected by ```PLP```/```RTI```, but there is no intruction that can actually read the break flag. ```PHP``` (push [PS](#processor-status) to [stack](#stack-0100-01ff)) and ```BRK``` (break) actually share much of the same circuitry on the chip, and both of these instructions push the [PS](#processor-status) to [stack](#stack-0100-01ff), but the value pushed will always have the break flag bit set, regardless of whether its set in the [PS](#processor-status) or not.
 
 ##### Unused Flag
 
-This bit always appears high when the PS is pushed to the stack, and has no affect on any instruction.
+This bit always appears high when the [PS](#processor-status) is pushed to the [stack](#stack-0100-01ff), and has no affect on any instruction.
 
 ##### Overflow Flag
 
@@ -209,7 +211,7 @@ The overflow flag is affected by the following instructions:
 - ```CLV``` (clv overflow)
 - ```ADC```, ```SBC``` (add/subtract with carry)
 - ```BIT``` (bit test)
-- ```PLP``` (pull PS from stack)
+- ```PLP``` (pull [PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The following instructions are affected by the overflow flag:
@@ -230,7 +232,7 @@ The negative flag is affected by the following instructions:
 - ```BIT``` (bit test)
 - ```ASL```, ```LSR``` (arithmetic left/logical right shift)
 - ```ROL```, ```ROR``` (rotate left/right through carry)
-- ```PLA```, ```PLP``` (pull A/PS from stack)
+- ```PLA```, ```PLP``` (pull A/[PS](#processor-status) from [stack](#stack-0100-01ff))
 - ```RTI``` (return from interrupt)
 
 The following instructions are affected by the negative flag:
@@ -386,7 +388,7 @@ uint16_t read2Bytes(uint16_t address) {
 
 The second mask is neccessary in case the address given is ```$ffff```, meaning address+1 will have to wrap around.
 
-Another thing we will want to do is read the next byte (or, next 2 bytes) at the address the PC is pointing to. This will be how we fetch instruction op-codes as well as arguments.
+Another thing we will want to do is read the next byte (or, next 2 bytes) at the address the [PC](#program-counter) is pointing to. This will be how we fetch instruction op-codes as well as arguments.
 
 JavaScript:
 ```javascript
@@ -597,7 +599,7 @@ Absolute Y (aby)
 
 Indirect (ind)
 
-  this is actually the same as absolute mode, the next 2 bytes are used as an absolute address to read 2 more bytes (instead of 1). this is only used in jump instructions to set PC.
+  this is actually the same as absolute mode, the next 2 bytes are used as an absolute address to read 2 more bytes (instead of 1). this is only used in jump instructions to set [PC](#program-counter).
 
   ex. jmp ($1234)\
     jump to the 16-bit value at memory addresses $1234 and $1235
@@ -618,10 +620,10 @@ Indirect Y (iny)
 
 Relative (rel)
 
-  this is used for branch instructions, the next byte is used as a signed 8-bit offset to add to the PC.
+  this is used for branch instructions, the next byte is used as a signed 8-bit offset to add to the [PC](#program-counter).
 
   ex. bne label\
-        change PC by the operand (calculated by the assembler), so that it ends up where the label is.
+        change [PC](#program-counter) by the operand (calculated by the assembler), so that it ends up where the label is.
 
 If any of these modes are confusing (especially indirect modes), its okay. They are confusing, but we will go over them in more detail in the next part when we implement them.
 
@@ -1321,7 +1323,7 @@ uint16_t getIDXind(void) {
 
 ### Some More Helpers (Flags and the stack)
 
-Before we get into defining the instructions, we should get a couple more things together. First thing we will do is create functions for pushing and pulling values from the stack. We will increment/decrement SP accordingly. Remember that the stack is in the range $0100-$01ff, using SP as the low byte and fixing the high byte at $01. SP at any given time points to the next available location in the stack, so when we push a value, we want to use SP as is and then decrement it. When we pull, we want to first increment it and then use SP afterwards:
+Before we get into defining the instructions, we should get a couple more things together. First thing we will do is create functions for pushing and pulling values from the [stack](#stack-0100-01ff). We will increment/decrement [SP](#stack-pointer) accordingly. Remember that the [stack](#stack-0100-01ff) is in the range $0100-$01ff, using [SP](#stack-pointer) as the low byte and fixing the high byte at $01. [SP](#stack-pointer) at any given time points to the next available location in the [stack](#stack-0100-01ff), so when we push a value, we want to use SP as is and then decrement it. When we pull, we want to first increment it and then use [SP](#stack-pointer) afterwards:
 
 JavaScript:
 ```javascript
@@ -1360,7 +1362,7 @@ uint8_t pullStack() {
 }
 ```
 
-Now for the flags, each bit in PS corresponds to a flag. It will be useful to have masks for each of these bits:
+Now for the flags, each bit in [PS](#processor-status) corresponds to a flag. It will be useful to have masks for each of these bits:
 
 JavaScript:
 ```javascript
@@ -1398,7 +1400,7 @@ C:
 #define FLAG_C 0b00000001; // carry
 ```
 
-Then we can just do PS & FLAG_Z for example to isolate the zero flag bit. If you want to set a flag explicitly to a 1 or 0, you can use this function:
+Then we can just do ```PS & FLAG_Z``` for example to isolate the zero flag bit. If you want to set a flag explicitly to a ```1``` or ```0```, you can use this function:
 
 JavaScript:
 ```javascript
@@ -1421,7 +1423,7 @@ void setFlag(uint8_t flag, uint8_t value) {
 }
 ```
 
-Another thing we will need to do for alot of the instructions, is set just the N and Z flags based on some result. These are pretty easy to set. The position of the N flag bit is conviniently in the same position as the sign bit. So by taking FLAG_N & value, we will have the sign bit already in the right position. Z flag is in the second bit position (from the right), which we want to set if the value is zero.
+Another thing we will need to do for alot of the instructions, is set just the [N](#negative-flag) and [Z](#zero-flag) flags based on some result. These are pretty easy to set. The position of the N flag bit is conviniently in the same position as the sign bit. So by taking ```FLAG_N & value```, we will have the sign bit already in the right position. [Z](#zero-flag) flag is in the second bit position (from the right), which we want to set if the value is zero.
 
 JavaScript:
 ```javascript
@@ -1450,7 +1452,7 @@ void setNZflags(uint8_t value) {
 }
 ```
 
-For shift instructions, we will also want to set the carry bit along with N and Z.
+For shift instructions, we will also want to set the carry bit along with [N](#negative-flag) and [Z](#zero-flag).
 
 JavaScript:
 ```javascript
@@ -1482,7 +1484,7 @@ void setNZCflags(uint8_t value, uint8_t carry) {
 }
 ```
 
-For compare instructions, we will want to set N Z and C flags based on the result of a subtraction. This will have the effect of setting N if a < b, Z if a = b, and C if a >= b.
+For compare instructions, we will want to set [N](#negative-flag) [Z](#zero-flag) and [C](#carry-flag) flags based on the result of a subtraction. This will have the effect of setting [N](#negative-flag) if ```a < b```, [Z](#zero-flag) if ```a === b```, and [C](#carry-flag) if ```a >= b```.
 
 JavaScript:
 ```javascript
@@ -1651,9 +1653,9 @@ There are 56 distinct instructions supported by the 6502. These can be grouped i
 
 Memory transfer
 
-  LDA - load A\
-  LDX - load X\
-  LDY - load Y\
+  LDA - load [A](#accumulator)\
+  LDX - load [X](#index-registers)\
+  LDY - load [Y](#index-registers)\
   STA - store A\
   STX - store X\
   STY - store Y\
@@ -1661,13 +1663,13 @@ Memory transfer
   TAY - transfer A to Y\
   TXA - transfer X to A\
   TYA - transfer Y to A\
-  TXS - transfer X to SP\
+  TXS - transfer X to [SP](#stack-pointer)\
   TSX - transfer SP to X
 
 Stack
 
-  PHA - push A to stack\
-  PHP - push PS to stack\
+  PHA - push A to [stack](#stack-0100-01ff)\
+  PHP - push [PS](#processor-status) to stack\
   PLA - pull A from stack\
   PLP - pull PS from stack
 
@@ -1679,7 +1681,7 @@ Arithmetic
   DEC - decrement memory value\
   DEX - decrement X\
   DEY - decrement Y\
-  ADC - add with carry\
+  ADC - add with [carry](#carry-flag)\
   SBC - subtract with "carry"/borrow\
   CMP - compare A to a memory value\
   CPX - compare X to a memory value\
@@ -1698,21 +1700,21 @@ Logic/Bitwise
 
 Flags
 
-  SED - set decimal mode\
-  SEI - set interrupt disable\
-  SEC - set carry\
-  CLV - clear overflow\
-  CLD - clear decimal mode\
-  CLI - clear interrupt disable\
-  CLC - clear carry
+  SED - set [decimal mode](#decimal-mode-flag)\
+  SEI - set [interrupt disable](#interrupt-disable-flag)\
+  SEC - set [carry](#carry-flag)\
+  CLV - clear [overflow](#overflow-flag)\
+  CLD - clear [decimal mode](#decimal-mode-flag)\
+  CLI - clear [interrupt disable](#interrupt-disable-flag)\
+  CLC - clear [carry](#carry-flag)
 
 Control Flow
 
-  BMI - branch if "minus" (n flag set)\
+  BMI - branch if "minus" ([N flag](#negative-flag) set)\
   BVS - branch if overflow set\
-  BNE - branch if not equal (zero flag set)\
+  BNE - branch if not equal ([zero flag](#zero-flag) set)\
   BCS - branch if carry set\
-  BPL - branch if "plus" (n flag clear)\
+  BPL - branch if "plus" (N flag clear)\
   BVC - branch if overflow clear\
   BEQ - branch if equal (zero flag clear)\
   BCC - branch if carry clear\
@@ -1892,7 +1894,7 @@ void TXS(void) { SP = X; }
 ```
 
 
-Stack instructions involve the push/pull stack functions we defined earlier. Pushing/Pulling the accumulator is straightforward. PLA sets N and Z flags.
+Stack instructions involve the push/pull [stack](#stack-0100-01ff) functions we defined earlier. Pushing/Pulling the accumulator is straightforward. PLA sets N and Z flags.
 
 JavaScript:
 ```javascript
@@ -1916,7 +1918,7 @@ void PHA(void) { pushStack(A); }
 void PLA(void) { setNZflags(A = pullStack()); }
 ```
 
-With PS though, there are a couple caveats. First of all, any time PS is pushed to the stack, the U bit will be set in the value pushed. Regardless of what the actual U bit is in PS. The B flags is also ignored when pushing PS. Although the actual value in the B bit of the value pushed depends on the instruction/context. PHP actually shares logic with the BRK instruction, so in this case it will push PS with both the U and B flags set.
+With [PS](#processor-status) though, there are a couple caveats. First of all, any time PS is pushed to the [stack](#stack-0100-01ff), the [U](#unused-flag) bit will be set in the value pushed. Regardless of what the actual U bit is in PS. The [B](#break-flag) flag is also ignored when pushing PS. Although the actual value in the B bit of the value pushed depends on the instruction/context. PHP actually shares logic with the BRK instruction, so in this case it will push PS with both the U and B flags set.
 
 JavaScript:
 ```javascript
@@ -1933,7 +1935,7 @@ C:
 void PHP(void) { pushStack(PS | FLAG_B | FLAG_U); }
 ```
 
-As long as we make sure to always take care of B and U flags when pushing PS, we can just pull PS as is since theres no other way for the program to interact with those bits.
+As long as we make sure to always take care of B and U flags when pushing [PS](#processor-status), we can just pull [PS](#processor-status) as is since theres no other way for the program to interact with those bits.
 
 JavaScript:
 ```javascript
@@ -2012,7 +2014,7 @@ void DEC(uint16_t p) { setNZflags(--RAM[p]); }
 ```
 
 
-Now for ADC. In theory this is a very simple instruction, just like the rest. It does have a little more involvement, it take the accumulator, a memory value, a carry in, and sets some flags, but its just an addition. This is true if you ignore decimal mode. Fortunately, Ive done all the hard work for you, and worked out an actual correct implementation of ADC that matches the hardware precisely. Ive tested against every single possible set of inputs (A = 0-255, memory value = 0-255, C flag = 0-1, D flag = 0-1) with results from the visual6502 emulator. Ill paste the function I have for ADC when the D flag is set here:
+Now for ADC. In theory this is a very simple instruction, just like the rest. It does have a little more involvement, it take the accumulator, a memory value, a carry in, and sets some flags, but its just an addition. This is true if you ignore decimal mode. Fortunately, Ive done all the hard work for you, and worked out an actual correct implementation of ADC that matches the hardware precisely. Ive tested against every single possible set of inputs (A = 0-255, memory value = 0-255, C flag = 0-1, D flag = 0-1) with results from the visual6502 emulator. Ill paste the function I have for ADC when the [D](#decimal-mode-flag) flag is set here:
 
 JavaScript:
 ```javascript
@@ -2160,7 +2162,7 @@ C:
 static inline void SBC(uint8_t v) { return ADC(~v); }
 ```
 
-Compare instructions are really just a subtraction except only the flags are affected. No carry or decimal flags influence these instructions. These end up setting the N flag is A < v, the C flag if A > v, or the Z flag if A = v. You can implement like this:
+Compare instructions are really just a subtraction except only the flags are affected. No carry or decimal flags influence these instructions. These end up setting the [N flag](#negative-flag) is ```A < v```, the [C flag](#carry-flag) if ```A > v```, or the [Z flag](#zero-flag) if ```A === v```. You can implement like this:
 
 JavaScript:
 ```javascript
@@ -2299,7 +2301,7 @@ void ORA(uint8_t v) { setNZflags(A |= v); }
 void EOR(uint8_t v) { setNZflags(A ^= v); }
 ```
 
-The BIT instruction sets the Z flag based on a bitwise and between the accumulator and the operand, but it also has a side effect where it copies bits 6 and 7 from the operand into PS. We can implement like this:
+The BIT instruction sets the [Z](#zero-flag) flag based on a bitwise and between the accumulator and the operand, but it also has a side effect where it copies bits 6 and 7 from the operand into [PS](#processor-status). We can implement like this:
 
 JavaScript:
 ```javascript
@@ -2389,7 +2391,7 @@ void ASL_A(void) {
 }
 ```
 
-ROR and ROL are similar to LSR and ASL, the only difference is instead of shifting in a 0 at either side, we shift in the C flag.
+ROR and ROL are similar to LSR and ASL, the only difference is instead of shifting in a 0 at either side, we shift in the [C](#carry-flag) flag.
 
 JavaScript:
 ```javascript
@@ -2586,65 +2588,65 @@ void CLD(void) { PS &= ~FLAG_D; }
 void CLV(void) { PS &= ~FLAG_V; }
 ```
 
-Branch instructions take in a relative, signed 8-bit value, and they depend on certain flags either being clear or set to determine whether or not to add the offset to PC.
+Branch instructions take in a relative, signed 8-bit value, and they depend on certain flags either being clear or set to determine whether or not to add the offset to [PC](#program-counter).
 
 JavaScript:
 ```javascript
-function BCS(v) { if (PS & FLAG_C) PC = PC + v & 0xffff; }
-function BEQ(v) { if (PS & FLAG_Z) PC = PC + v & 0xffff; }
-function BVS(v) { if (PS & FLAG_V) PC = PC + v & 0xffff; }
-function BMI(v) { if (PS & FLAG_N) PC = PC + v & 0xffff; }
-function BCC(v) { if (~PS & FLAG_C) PC = PC + v & 0xffff; }
-function BNE(v) { if (~PS & FLAG_Z) PC = PC + v & 0xffff; }
-function BVC(v) { if (~PS & FLAG_V) PC = PC + v & 0xffff; }
-function BPL(v) { if (~PS & FLAG_N) PC = PC + v & 0xffff; }
+function BCS(v) { if ([PS](#processor-status) & FLAG_C) PC = PC + v & 0xffff; }
+function BEQ(v) { if ([PS](#processor-status) & FLAG_Z) PC = PC + v & 0xffff; }
+function BVS(v) { if ([PS](#processor-status) & FLAG_V) PC = PC + v & 0xffff; }
+function BMI(v) { if ([PS](#processor-status) & FLAG_N) PC = PC + v & 0xffff; }
+function BCC(v) { if (~[PS](#processor-status) & FLAG_C) PC = PC + v & 0xffff; }
+function BNE(v) { if (~[PS](#processor-status) & FLAG_Z) PC = PC + v & 0xffff; }
+function BVC(v) { if (~[PS](#processor-status) & FLAG_V) PC = PC + v & 0xffff; }
+function BPL(v) { if (~[PS](#processor-status) & FLAG_N) PC = PC + v & 0xffff; }
 ```
 
 Python:
 ```python
 def BCS(v):
   global PC
-  if PS & FLAG_C: PC = PC + v & 0xffff
+  if [PS](#processor-status) & FLAG_C: PC = PC + v & 0xffff
 
 def BEQ(v):
   global PC
-  if PS & FLAG_Z: PC = PC + v & 0xffff
+  if [PS](#processor-status) & FLAG_Z: PC = PC + v & 0xffff
 
 def BVS(v):
   global PC
-  if PS & FLAG_V: PC = PC + v & 0xffff
+  if [PS](#processor-status) & FLAG_V: PC = PC + v & 0xffff
 
 def BMI(v):
   global PC
-  if PS & FLAG_N: PC = PC + v & 0xffff
+  if [PS](#processor-status) & FLAG_N: PC = PC + v & 0xffff
 
 def BCC(v):
   global PC
-  if ~PS & FLAG_C: PC = PC + v & 0xffff
+  if ~[PS](#processor-status) & FLAG_C: PC = PC + v & 0xffff
 
 def BNE(v):
   global PC
-  if ~PS & FLAG_Z: PC = PC + v & 0xffff
+  if ~[PS](#processor-status) & FLAG_Z: PC = PC + v & 0xffff
 
 def BVC(v):
   global PC
-  if ~PS & FLAG_V: PC = PC + v & 0xffff
+  if ~[PS](#processor-status) & FLAG_V: PC = PC + v & 0xffff
 
 def BPL(v):
   global PC
-  if ~PS & FLAG_N: PC = PC + v & 0xffff
+  if ~[PS](#processor-status) & FLAG_N: PC = PC + v & 0xffff
 ```
 
 C:
 ```c
-void BCS(int8_t v) { if (PS & FLAG_C) PC += v; }
-void BEQ(int8_t v) { if (PS & FLAG_Z) PC += v; }
-void BVS(int8_t v) { if (PS & FLAG_V) PC += v; }
-void BMI(int8_t v) { if (PS & FLAG_N) PC += v; }
-void BCC(int8_t v) { if (~PS & FLAG_C) PC += v; }
-void BNE(int8_t v) { if (~PS & FLAG_Z) PC += v; }
-void BVC(int8_t v) { if (~PS & FLAG_V) PC += v; }
-void BPL(int8_t v) { if (~PS & FLAG_N) PC += v; }
+void BCS(int8_t v) { if ([PS](#processor-status) & FLAG_C) PC += v; }
+void BEQ(int8_t v) { if ([PS](#processor-status) & FLAG_Z) PC += v; }
+void BVS(int8_t v) { if ([PS](#processor-status) & FLAG_V) PC += v; }
+void BMI(int8_t v) { if ([PS](#processor-status) & FLAG_N) PC += v; }
+void BCC(int8_t v) { if (~[PS](#processor-status) & FLAG_C) PC += v; }
+void BNE(int8_t v) { if (~[PS](#processor-status) & FLAG_Z) PC += v; }
+void BVC(int8_t v) { if (~[PS](#processor-status) & FLAG_V) PC += v; }
+void BPL(int8_t v) { if (~[PS](#processor-status) & FLAG_N) PC += v; }
 ```
 
 Jump is dead simple.
@@ -2666,7 +2668,7 @@ C:
 void JMP(uint16_t p) { PC = p; }
 ```
 
-And we are almost there. Just a few more to go. Lets look at JSR. For JSR instructions, two things happen. First, the PC (minus 1) is pushed onto the stack, high byte first, and then low byte. Second, PC jumps to the given operand.
+And we are almost there. Just a few more to go. Lets look at JSR. For JSR instructions, two things happen. First, the [PC](#program-counter) (minus 1) is pushed onto the [stack](#stack-0100-01ff), high byte first, and then low byte. Second, [PC](#program-counter) jumps to the given operand.
 
 JavaScript:
 ```javascript
@@ -2698,7 +2700,7 @@ void JSR(uint16_t p) {
 }
 ```
 
-Notice how PC is pushed to the stack as-is in the second push function. This ends up storing the low byte since RAM is a Uint8Array, so it just stores what fits (the low byte).
+Notice how [PC](#program-counter) is pushed to the [stack](#stack-0100-01ff) as-is in the second push function. This ends up storing the low byte since RAM is a Uint8Array, so it just stores what fits (the low byte).
 
 RTI does the opposite. It needs to pull PC from the stack, low byte first, and then the high byte. It also needs to un-subtract 1 from the return pointer.
 
@@ -2725,12 +2727,12 @@ void RTS(void) {
 
 BRK is somewhat similar to JSR, but it has a few more steps. Specifically, BRK does:
 
-1. increment PC (to the correct return address)
-2. push the PC high byte onto the stack
+1. increment [PC](#program-counter) (to the correct return address)
+2. push the PC high byte onto the [stack](#stack-0100-01ff)
 3. push the PC low byte onto the stack
-4. push PS onto the stack (with B and U flags set)
-5. set the I flag
-6. jump to the value store at the irq vector ($fffe-$ffff)
+4. push [PS](#processor-status) onto the stack (with [B](#break-flag) and [U](#unused-flag) flags set)
+6. set the [I](#interrupt-disable-flag) flag
+7. jump to the value store at the irq vector ($fffe-$ffff)
 
 That ends up looking like this:
 
@@ -2740,7 +2742,7 @@ function BRK() {
   PC++;
   pushStack(PC >>> 8);
   pushStack(PC);
-  pushStack(PS | FLAG_U | FLAG_B);
+  pushStack([PS](#processor-status) | FLAG_U | FLAG_B);
   PS |= FLAG_I;
   PC = read2Bytes(0xfffe);
 }
@@ -3504,11 +3506,11 @@ There are 3 more functions that we are going to treat kind of like instructions,
 
 Starting with reset, this is the first thing that should be executed when the chip "turns on". We should also be able to trigger it by "sending a reset signal". Both of those scenerios we will handle a little bit later, but as for the implementation, there is really only three things that happen in the reset sequence:
 
-1. a couple flags get set/cleared (D flag cleared, I flag set)
-2. SP is initialized to $fd
-3. PC jumps to the address stored at the reset vector ($fffc-$fffd)
+1. a couple flags get set/cleared ([D](#decimal-mode-flag) flag cleared, [I](#interrupt-disable-flag) flag set)
+2. [SP](#stack-pointer) is initialized to $fd
+3. [PC](#program-counter) jumps to the address stored at the reset vector ($fffc-$fffd)
 
-SP ends up at $fd because the 6502 shares some of this logic with the BRK instruction. It actually initializes SP to 0, and then does a couple of ghost pushes to the stack. Although no values are actually put onto the stack at this time because this is done as a read operation instead of a write. Heres what we end up with for reset:
+[SP](#stack-pointer) ends up at $fd because the 6502 shares some of this logic with the BRK instruction. It actually initializes [SP](#stack-pointer) to 0, and then does a couple of ghost pushes to the [stack](#stack-0100-01ff). Although no values are actually put onto the [stack](#stack-0100-01ff) at this time because this is done as a read operation instead of a write. Heres what we end up with for reset:
 
 JavaScript:
 ```javascript
