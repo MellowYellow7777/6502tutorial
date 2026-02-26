@@ -10,6 +10,230 @@ Im going to plan on being quite exhastive in explaining everything. There are pl
 
 I will be using javacript mainly, but the implementation is portable to any language you like.
 
+## Preliminary: Data Representation
+
+In this section, we are going to go over base 2 (binary) and base 16 (hexadecimal) numbers, as well as bitwise operations. If you already have a comforatable understanding of these topics, you can safely skip to the next section: [Preliminary: What is the 6502?](#preliminary-what-is-the-6502). Otherwise, I'm going to walk you through what each of these things are, what do they mean, and why are they important.
+
+### Decimal Numbers
+
+I think it will be easiest to go over something that we are already familiar with, decimal numbers. These are your normal every day numbers. 1, 2, 3, ... 10, 11, 12, etc. Why go over this? Because decimal, binary, and hexadecimal all pivot around the exact same pattern. The only difference is between a single number, called the 'base'. Decimal is base 10, binary is base 2, hexadecimal is base 16. So we are going to remind ourselves of what is the crucial role that the number 10 plays in our dinary number system.
+
+Let's first focus into is the idea of what is a digit? More precisely, what does each digit mean? Let's consider the number 203. You might remember expanding numbers in elementary school like this:
+
+###### Example 1
+```
+2 * 100 +
+0 * 10 +
+3 * 1
+```
+
+This gives us a way to visualize what 203 is actually made up of. 2 hundreds, 0 tens, and 3 ones. So by saying "two hundered and three", that literally means 2 * 100 + 3. Notice how we have each of the digits along the left side, and on the right, we have 1, 10, and 100. So what is so important about the number 10, why is decimal a "base 10" system? It is the number we multiply by to get to the next digits place. We have each digit of a decimal number represent how many 1s, 10s, 100s, 1000s, 10000s, and so on are in that number. And these differ by a factor of 10.
+
+###### Example 2
+```
+1 * 10 = 10
+10 * 10 = 100
+100 * 10 = 1000
+1000 * 10 = 10000
+10000 * 10 = ...
+```
+
+10 is also the number of digits we use. 0 is one digit, and 1 through 9 are the other nine. And that is it. We can  turn this into base 2, base 16, base 8, base 1000, simply by substituing each of those numbers in place of 10 as it was used here.
+
+### Binary Numbers
+
+To avoid confusion, I will be prefixing binary numbers with "0b", and leaving decimal numbers as is.
+
+Binary is base 2. And what is so important about the number 2, why is binary a "base 2" system? It is the number we multiply by to get to the next digits place. We have each digit of a binary number represent how many 1s, 2s, 4s, 8s, 16s, and so on are in that number. And these differ by a factor of 2.
+
+###### Example 3
+```
+1 * 2 = 2
+2 * 2 = 4
+4 * 2 = 8
+8 * 2 = 16
+16 * 2 = ...
+```
+
+2 is also the number of digits we use. 0 is one digit, and 1, well, is the other.
+
+Now we have instead of a 1s, 10s, 100s, 1000s, ... places, we have a 1s, 2s, 4s, 8s, ... places.
+
+If we have a binary number, lets say, 0b100, we can expand it in the same way as before to work out its value, using our new digit place factors:
+
+###### Example 4
+```
+1 * 4 +
+0 * 2 +
+0 * 1
+```
+
+So 0b100 = 4.
+
+In binary, these 1s, 2s, 4s, 8s, ... places are 0b1s, 0b10s, 0b100s, 0b1000s, ... places. So from the binary perspective, we still have 1, 10, 100, 1000 and so on and so forth, but they are binary 0b1, 0b10, 0b100, 0b1000, and on and on. In fact, if we rewrite [Example 3](#example-3) with binary numbers instead of decimal numbers, we get:
+
+###### Example 5
+```
+0b1 * 0b10 = 0b10
+0b10 * 0b10 = 0b100
+0b100 * 0b10 = 0b1000
+0b1000 * 0b10 = 0b10000
+0b10000 * 0b10 = ...
+```
+
+Deja vu? Look back at [Example 2](#example-2)! This is the exact same thing except with 2 instead of 10, 2 which, in binary, is 0b10. So binary ones places are worth 0b1 = 1, binary tens places are worth 0b10 = 2, binary hundreds places are worth 0b100 = 4, thousands are worth 0b1000 = 8. Look at the parallel:
+
+###### Example 6
+```
+Decimal  1101 "one thousand one hundered and one" is 1  *  1000 + 1  *  100 + 0  *  10 + 1  *  1
+Binary 0b1101 "one thousand one hundered and one" is 1 * 0b1000 + 1 * 0b100 + 0 * 0b10 + 1 * 0b1
+```
+
+This trivially results in 1101 and 0b1101 respectively, but for us to understand what is the decimal value of 0b1101, we can do the same calculation using our decimal 1, 2, 4, 8s instead of the binary 0b1, 0b10, 0b100, 0b1000s:
+
+###### Example 7
+```
+Binary 0b1101 is 1 * 8 + 1 * 4 + 0 * 2 + 1 * 1
+               =     8 +     4 +             1 = 13
+```
+
+### Hexadecimal Numbers
+
+To avoid confusion, I will be prefixing hexadecimal numbers with "0x", and leaving decimal numbers as is.
+
+Hexadecimal is base 16. And what is so important about the number 16, why is hexadecimal a "base 16" system? I'm sure you get the point by now. It is the number we multiply by to get to the next digits place. We have each digit of a hexadecimal number represent how many 1s, 16s, 256s, 4096s, 65536s and so on are in that number. And these differ by a factor of 16.
+
+###### Example 8
+```
+1 * 16 = 16
+16 * 16 = 256
+256 * 16 = 4096
+4096 * 16 = 65536
+65536 * 16 = ...
+```
+
+16 is also the number of digits we use. 0 is one digit, and 1 through 9 makes ten, and A through F (upper or lowercase), makes 16. 0xA = 10, 0xB = 11, 0xC = 12, 0xD = 13, 0xE = 14, 0xF = 15. And, 0x10 = 16. Any base over 10 up to base 36 typically will use letters A-Z as many as needed. You can then work out the digit values of letters by counting up from A = 10, B = 11, ... Z = 35.
+
+Now we have instead of a 1s, 10s, 100s, 1000s, ... places, we have a 1s, 16s, 256s, 4096s, ... places.
+
+If we have a hexadecimal number, lets say, 0xABC, we can expand it in the same way as before to work out its value, using our new digit place factors:
+
+###### Example 9
+```
+0xA * 256 +
+0xB * 16 +
+0xC * 1
+=
+10 * 256 +
+11 * 16 +
+12 * 1
+```
+
+That would be a 2748 in decimal.
+
+In hexadecimal, these 1s, 16s, 256s, 4096s, ... places are 0x1s, 0x10s, 0x100s, 0x1000s, ... places. So from the hexadecimal perspective, we still have 1, 10, 100, 1000 and so on and so forth, but they are hexadecimal 0x1, 0x10, 0x100, 0x1000 and on and on. In fact, if we rewrite [Example 9](#example-9) with hexadecimal numbers instead of decimal numbers, we get:
+
+###### Example 10
+```
+0x1 * 0x10 = 0x10
+0x10 * 0x10 = 0x100
+0x100 * 0x10 = 0x1000
+0x1000 * 0x10 = 0x10000
+0x10000 * 0x10 = ...
+```
+
+Deja vu? Look back at [Example 2](#example-2), and [Example 5](#example-5)! This is the exact same thing except with 16 instead of 10, 16 which, in hexadecimal, is 0x10. So hexadecimal ones places are worth 0x1 = 1, hexadecimal tens places are worth 0x10 = 16, hexadecimal hundreds places are worth 0x100 = 256, thousands are worth 0x1000 = 4096. Look at the parallel:
+
+###### Example 11
+```
+Decimal 1203 "one thousand two hundered and three" is 1  *  1000 + 2  *  100 + 0  *  10 + 3  *  1
+Hex   0x1203 "one thousand two hundered and three" is 1 * 0x1000 + 2 * 0x200 + 0 * 0x10 + 3 * 0x1
+```
+
+This trivially results in 1203 and 0x1203 respectively, but for us to understand what is the decimal value of 0x1203, we can do the same calculation using our decimal 1, 16, 256, 4096s instead of the hexadecimal 0x1, 0x10, 0x100, 0x1000s:
+
+###### Example 12
+```
+Hex 0x1203 is 1 * 4096 + 2 * 256 + 0 * 16 + 1 * 1
+            =     4096 +     512 +              1 = 4611
+```
+
+### Converting Between Bases
+
+To avoid confusion, I will be appending "_bn" to base n numbers, n being a positive integer.
+
+#### To Decimal
+
+How to find the decimal value of aa44_b12?
+
+1. Work out the place values, starting with 1 and repeatedly multiplying the base number until you have a place value for each digit.
+3. Multiply each place value by the corresponding digit of the number. The rightmost digit will always be in the 1s place.
+   - dont forget, 'letter' digits have values starting at A = 10, B = 11, and so on.
+4. Take the sum and youre done.
+
+We have 'aa44' in base 12. Working out the place values:
+
+```
+1 * 12 = 12
+12 * 12  = 144
+144 * 12 = 1728
+1728 * 12 = ...
+```
+
+So we have a 1s, 12s, 144s, and 1728s place. Now we multiply by each digit accordingly:
+
+```
+4 * 1    =                 4
+4 * 12   =                48
+a * 144  = 10 * 144  =  1440
+a * 1728 = 10 * 1728 = 17280
+```
+
+4 + 48 + 1440 + 17280 = 18772
+
+#### From Decimal
+
+How to find the base 12 value of 18772?
+
+To convert decimal number N to base B:
+
+1. Starting with 1, Work out every place value that is less than the decimal number.
+2. For each place value, from largest to smallest:
+   1. Find the maximum number of times that it will fit into the number. This is the num // pval (floored quotient).
+   2. Record the result as the corresponding place value digit.
+      - dont forget, values > 9 are represented by letters from 10 = A, 11 = B, and so on.
+   3. Subtract the place value * the floored quotient from the decimal number.
+
+We have 18772 to convert to base 12. Working out the place values:
+
+```
+1 * 12 = 12
+12 * 12  = 144
+144 * 12 = 1728
+1728 * 12 = 20736
+```
+
+So our place values are 1, 12, 144, and 1728, excluding 20736 as it is bigger than 18772.
+
+```
+18772 // 1728 = 10
+18772 - 10 * 1728 = 1492
+10 means we now have the digit 'a'
+
+1492 // 144 = 10
+1492 - 10 * 144 = 52
+10 means we now have digits 'aa'
+
+52 // 12 = 4
+52 - 4 * 12 = 4
+4 means we now have digits 'aa4'
+
+4 // 1 = 4
+4 - 4 * 1 = 0
+4 means we now have digits 'aa44'
+```
+
+
 ## Preliminary: What is the 6502?
 
 ### From the Outside
